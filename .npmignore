@@ -1,0 +1,18 @@
+# IntelliJ project files
+.idea
+*.iml
+*.log
+*.json
+out
+gen
+# Created by .ignore support plugin (hsz.mobi)
+lib/
+node_modules/
+test/
+src/
+demo/
+gulpfile.js
+farma.conf.js
+.gitignore
+.npmigonre
+index.html
