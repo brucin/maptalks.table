@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>maptalks.table demo</title>
+    <link type="text/css" rel="stylesheet" href="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.css">
+    <script src="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.min.js"></script>
+    <script type="text/javascript" src="../demo/js/jquery-1.9.1.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../demo/css/maptalks.toolbox.css">
+    <script type="text/javascript" src="../demo/js/maptalks.toolbox.min.js"></script>
+    <script type="text/javascript" src="../dist/maptalks.table.js"></script>
+    <script type="text/javascript" src="../demo/js/table_toolbox.js"></script>
+    <link rel="stylesheet" type="text/css" href="../demo/js/cxColor/css/jquery.cxcolor.css"/>
+    <script type="text/javascript" src="../demo/js/cxColor/js/jquery.cxcolor.js"></script>
+    <style>
+      html,
+      body {
+          margin: 0px;
+          height: 100%;
+          width: 100%;
+      }
+
+      #map {
+          width: 100%;
+          height: 100%;
+      }
+
+    </style>
+  </head>
+  <body>
+
+    <div id="map"></div>
+    <script>
+    var map = new maptalks.Map("map",{
+        center:      [0, 0],
+        zoom:  2,
+        attributionControl : {
+            'content' : '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        },
+        baseLayer : new maptalks.TileLayer("base",{
+            'urlTemplate' : 'http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png',
+            'subdomains'  : ['a','b','c','d','e']
+        })
+    });
+
+      var layer = new maptalks.VectorLayer('vector').addTo(map);
+
+      var toolbox = new maptalks.control.Toolbar({
+          position : { //工具条放置位置
+              top: '35',
+              right: '50'
+          },
+          items: [
+            {
+              item: 'Add Table',
+              click : function(param){
+                  map.on('click', markerGrid);
+              }
+          },{
+              item: 'Screenshot',
+              click : function(param){
+                  var image = map.toDataURL();
+                  window.open(image);
+              }
+          }]
+        });
+        map.addControl(toolbox);
+        map.config('doubleClickZoom', false);
+
+
+      function markerGrid(param) {
+        map.off('click', markerGrid);
+        var coordinate = param.coordinate;
+        var tableId = 'NWP_TABLE_'+ maptalks.Util.GUID();
+        var tableOptions = {
+            'id': tableId,
+            'title': 'New York City',
+            'columns': [
+                {header:'District', dataIndex: 'District', type: 'string', maxWidth: 100},
+                {header:'Area', dataIndex: 'Area', type: 'string', maxWidth: 100},
+                {header:'Population', dataIndex: 'Population', type: 'string', maxWidth: 100}
+            ],
+            'data': [
+                {District:'Bronx', Area:'44', Population: '600,000'},
+                {District:'Brooklyn', Area:'82', Population: '2,400,000'},
+                {District:'Queens', Area:'112', Population: '2,200,000'},
+                {District:'Manhattan', Area:'24', Population: '1,500,000'},
+                {District:'This is a long sentence.', Area:'60', Population: '443,000'}
+            ],
+            'headerSymbol': {
+                'lineColor': '#cccccc',
+                'fill': '#2F373E',
+                'textFaceName': 'microsoft yahei',
+                'textSize': 18,
+                'textFill': '#FFFFFF',
+                'textWrapWidth': 100
+            },
+            'symbol': {
+                'lineColor': '#cccccc',
+                'fill': '#eeeeee',
+                'textFaceName': 'microsoft yahei',
+                'textSize': 18,
+                'textFill': '#333333',
+                'textWrapWidth': 100
+            },
+            'position': coordinate,
+            'width': 300,
+            'height': 80,
+            'draggable': true,
+            'editable' : true,
+            'header': true,
+            'order': true,
+            'startNum': 1
+
+        };
+        var table = new maptalks.Table(tableOptions);
+        table.addTo(layer);
+        var tableToolbox = new TableToolbox();
+        tableToolbox.addTo(table);
+        tableToolbox.hide();
+        table.on('remove', function(){
+            tableToolbox.remove();
+        });
+        table._currentRow = 0;
+        table._currentCol = 0;
+    }
+
+    </script>
+  </body>
+</html>

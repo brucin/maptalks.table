@@ -1,46 +1,48 @@
 {
-  "name": "maptalks-table",
-  "version": "0.1.1",
-  "description": "maptalks table.",
+  "name": "maptalks.table",
+  "version": "0.1.0",
+  "description": "A Table plugin for maptalks.js.",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/brucin/maptalks.table.js"
+    "url": "https://github.com/brucin/maptalks.table.git"
   },
-  "main": "maptalks.table.js",
+  "main": "dist/maptalks.table.js",
   "scripts": {
-    "lint": "eslint *.js test/**/*.js",
+    "lint": "eslint index.js src/**/*.js test/**/*.js",
     "test": "gulp test",
-    "pretest": "npm run lint"
+    "pretest": "npm run lint",
+    "prepublish": "npm run lint && gulp minify"
   },
   "devDependencies": {
-    "eslint": "^2.4.0",
+    "babel-eslint": "^6.1.2",
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-preset-es2015": "^6.24.1",
+    "eslint": "^3.18.0",
     "eslint-config-maptalks": "^0.2.1",
-    "expect-maptalks": "^0.2.0",
+    "eslint-plugin-mocha": "^4.8.0",
+    "expect-maptalks": "^0.2.5",
     "expect.js": "^0.3.1",
     "gulp": "^3.9.0",
-    "gulp-concat": "^2.6.0",
-    "gulp-coveralls": "^0.1.4",
-    "gulp-footer": "^1.0.5",
-    "gulp-gzip": "^1.2.0",
-    "gulp-mocha": "^2.2.0",
-    "gulp-header": "^1.7.1",
-    "gulp-rename": "~1.2.2",
-    "gulp-rev-append": "^0.1.6",
-    "gulp-uglify": "^1.5.1",
     "happen": "^0.3.1",
-    "karma": "^0.13.22",
-    "karma-chrome-launcher": "^1.0.1",
-    "karma-expect": "^1.1.2",
-    "karma-expect-maptalks": "^0.1.3",
-    "karma-mocha": "^1.0.1",
-    "karma-phantomjs-launcher": "^1.0.0",
+    "karma": "^1.7.0",
+    "karma-chrome-launcher": "^2.0.0",
+    "karma-expect": "^1.1.3",
+    "karma-expect-maptalks": "^0.1.4",
+    "karma-firefox-launcher": "^1.0.0",
+    "karma-happen": "^0.1.0",
+    "karma-ie-launcher": "^1.0.0",
+    "karma-mocha": "^1.3.0",
+    "karma-mocha-reporter": "^2.2.1",
+    "karma-sinon": "^1.0.5",
+    "maptalks": "^0.25.0",
+    "maptalks-build-helpers": "^0.1.0",
     "minimist": "^1.2.0",
-    "mocha": "^2.4.5",
-    "phantomjs-prebuilt": "^2.1.7",
-    "sinon": "^1.14.1"
+    "mocha": "^2.5.3",
+    "sinon": "^1.17.7"
   },
   "peerDependencies": {
     "maptalks": "<2.0.0"
-  }
+  },
+  "dependencies": {}
 }

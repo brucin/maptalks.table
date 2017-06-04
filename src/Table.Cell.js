@@ -1,92 +1,99 @@
-maptalks.Table.include(/** @lends maptalks.Table.prototype */{
+import Table from './Table';
 
-    createCell: function(content, cellOffset, size, symbol) {
-        var textSize = symbol['textSize']||12;
-        var textLineSpacing = symbol['textLineSpacing']||8;
+Table.include(/** @lends Table.prototype */{
+
+    createCell: function (content, cellOffset, size, symbol) {
+        var textSize = symbol['textSize'] || 12;
+        var textLineSpacing = symbol['textLineSpacing'] || 8;
         content = this._filterContent(content);
         var options = {
-               'symbol': {
-                   'markerLineColor': symbol['lineColor']||'#ffffff',
-                   'markerLineWidth': 1,
-                   'markerLineOpacity': 0.9,
-                   'markerLineDasharray': null,
-                   'markerFill': symbol['fill']||'#4e98dd',
-                   'markerFillOpacity': 0.9,
-                   'markerDx': cellOffset['dx']||0,
-                   'markerDy': cellOffset['dy']||0,
+            'symbol': {
+                'markerLineColor': symbol['lineColor'] || '#ffffff',
+                'markerLineWidth': 1,
+                'markerLineOpacity': 0.9,
+                'markerLineDasharray': null,
+                'markerFill': symbol['fill'] || '#4e98dd',
+                'markerFillOpacity': 0.9,
+                'markerDx': cellOffset['dx'] || 0,
+                'markerDy': cellOffset['dy'] || 0,
 
-                   'textFaceName': symbol['textFaceName']||'microsoft yahei',
-                   'textSize': textSize,
-                   'textFill': symbol['textFill']||'#ff0000',
-                   'textOpacity': 1,
-                   'textSpacing': 30,
-                   'textWrapWidth': size['width'],
-                   'textWrapBefore': false,
-                   'textLineSpacing': textLineSpacing,
-                   'textHorizontalAlignment': 'middle',
-                   'textVerticalAlignment': 'middle',
-                   'textDx': cellOffset['dx']||0,
-                   'textDy': cellOffset['dy']||0
-               },
-               'boxPadding'   :   {'width' : 15, 'height' : 8},
-               'draggable': false,
-               'boxAutoSize': false,
-               'boxMinWidth': size['width'],
-               'boxMinHeight': size['height']
+                'textFaceName': symbol['textFaceName'] || 'microsoft yahei',
+                'textSize': textSize,
+                'textFill': symbol['textFill'] || '#ff0000',
+                'textOpacity': 1,
+                'textSpacing': 30,
+                'textWrapWidth': size['width'],
+                'textWrapBefore': false,
+                'textLineSpacing': textLineSpacing,
+                'textHorizontalAlignment': symbol['textHorizontalAlignment'] || 'middle',
+                'textVerticalAlignment': symbol['textVerticalAlignment'] || 'middle',
+                'textWeight': symbol['textWeight'],
+                'textStyle': symbol['textStyle'],
+                'textDx': cellOffset['dx'] || 0,
+                'textDy': cellOffset['dy'] || 0
+            },
+            'boxPadding'   :   { 'width' : 15, 'height' : 8 },
+            'draggable': false,
+            'boxAutoSize': false,
+            'boxMinWidth': size['width'],
+            'boxMinHeight': size['height']
         };
         var coordinate = this.options['position'];
         return new maptalks.TextBox(content, coordinate, options);
     },
 
-    getCellOffset: function(row, col) {
-        var dx = 0, dy = 0, 
-            currentRowHeight = this._cellWidth/2,
-            currentColWidth = this._cellHeight/2;
-        if(this._rowHeights[row]) {
-          currentRowHeight = this._rowHeights[row]/2;;
+    getCellOffset: function (row, col) {
+        let dx = 0, dy = 0,
+            currentRowHeight = this._cellWidth / 2,
+            currentColWidth = this._cellHeight / 2;
+        if (this._rowHeights[row]) {
+            currentRowHeight = this._rowHeights[row] / 2;
         }
-        if(this._colWidths[col]) {
-          currentColWidth = this._colWidths[col]/2;
+        if (this._colWidths[col]) {
+            currentColWidth = this._colWidths[col] / 2;
         }
-        if(this._tableRows) {
-            for(var i = 0; i < row; i++) {
-                dy += this._rowHeights[i];
-            }
-            dy += currentRowHeight;
-            for(var i = 0; i < col; i++) {
-                dx += this._colWidths[i];
-            }
-            dx += currentColWidth;
-        } else {
-            dx = this._cellWidth*col + this._cellWidth/2;
-            dy = this._cellHeight*row + this._cellHeight/2;
+        for (let i = 0; i < row; i++) {
+            dy += this._rowHeights[i];
         }
-        return  {'dx' : dx, 'dy' : dy};
+        dy += currentRowHeight;
+        for (let i = 0; i < col; i++) {
+            dx += this._colWidths[i];
+        }
+        dx += currentColWidth;
+        return  { 'dx' : dx, 'dy' : dy };
     },
 
-    getCellSymbol: function(row, col) {
+    getCellSymbol: function (row, col) {
         var defaultSymbol = this.options['symbol'];
-        if(this.tableSymbols) {
-          var  symbol = this.tableSymbols[row+'_'+col];
-          if(symbol) {
-            if(!symbol['textLineSpacing']) {
-                symbol['textLineSpacing'] = defaultSymbol['textLineSpacing'];
+        if (this.tableSymbols) {
+            var  symbol = this.tableSymbols[row + '_' + col];
+            if (symbol) {
+                if (!symbol['textLineSpacing']) {
+                    symbol['textLineSpacing'] = defaultSymbol['textLineSpacing'];
+                }
+                return symbol;
             }
-            return symbol;
-          }
         }
         return defaultSymbol;
     },
 
-    _addEventsToCell: function(cell) {
-      var context = {
-        'table' : this,
-        'cell'  : cell,
-        'row'   : cell._row,
-        'col'   : cell._col,
-        'dataIndex' : cell.dataIndex
-      };
-      cell.on('mouseover', this._addMouseoverEvent, context)
+    getRowNum: function (cell) {
+        return cell._row;
+    },
+
+    getColNum: function (cell) {
+        return cell._col;
+    },
+
+    _addEventsToCell: function (cell) {
+        var context = {
+            'table' : this,
+            'cell'  : cell,
+            'row'   : cell._row,
+            'col'   : cell._col,
+            'dataIndex' : cell.dataIndex
+        };
+        cell.on('mouseover', this._addMouseoverEvent, context)
           .on('mouseout', this._addMouseoutEvent, context)
           .on('mousedown', this._addMousedownEvent, context)
           .on('click', this._addClickEvent, context)
@@ -95,84 +102,96 @@ maptalks.Table.include(/** @lends maptalks.Table.prototype */{
           .on('symbolchange', this._cellSymbolChangeEvent, context)
           .on('edittextstart', this._addEditTableEvent, context)
           .on('edittextend', this._cellEditTextEnd, context);
-      return cell;
+        return cell;
     },
 
-    _cellSymbolChangeEvent: function(event) {
+    _cellSymbolChangeEvent: function (event) {
         event['context'] = this;
         var table = this['table'];
         var cell = this['cell'];
         table.fire('symbolchange', event);
         var symbol = this['cell'].getSymbol();
-        table.tableSymbols[cell['_row']+'_'+cell['_col']] = table.convertCellToSaveSymbol(symbol);
+        table.tableSymbols[cell['_row'] + '_' + cell['_col']] = table.convertCellToSaveSymbol(symbol);
     },
 
-    _cellEditTextEnd: function(event) {
+    _cellEditTextEnd: function (event) {
         event['context'] = this;
         var table = this['table'];
         var cell = this['cell'];
         var rowNum = cell._row;
         var colNum = cell._col;
         var col = table._columns[colNum];
-        var dataType = col['dataIndex']
-        if(table.options['header']) {
-          if(rowNum > 0) {
-            rowNum -= 1;
-            table._data[rowNum][dataType] = cell.getContent();
-          } else {
-            table._columns[colNum]['header'] = cell.getContent();
-          }
+        var dataType = col['dataIndex'];
+        if (table.options['header']) {
+            if (rowNum > 0) {
+                rowNum -= 1;
+                table._data[rowNum][dataType] = cell.getContent();
+            } else {
+                table._columns[colNum]['header'] = cell.getContent();
+            }
         } else {
-          table._data[rowNum][dataType] = cell.getContent();
+            table._data[rowNum][dataType] = cell.getContent();
         }
         this['table'].fire('edittableend', event);
         this['table'].options['editing'] = false;
     },
 
-    convertCellToSaveSymbol: function(symbol) {
-        var saveSymbol = {
-              fill: symbol['markerFill'],
-              lineColor: symbol['markerLineColor'],
-              textFaceName: symbol['textFaceName'],
-              textFill: symbol['textFill'],
-              textSize: symbol['textSize'],
-              textWrapWidth: symbol['textWrapWidth']
+    convertCellToSaveSymbol: function (symbol) {
+        let saveSymbol = {
+            fill: symbol['markerFill'],
+            lineColor: symbol['markerLineColor'],
+            textFaceName: symbol['textFaceName'],
+            textFill: symbol['textFill'],
+            textSize: symbol['textSize'],
+            textWrapWidth: symbol['textWrapWidth'],
+            textHorizontalAlignment: symbol['textHorizontalAlignment'],
+            textWeight: symbol['textWeight'],
+            textStyle: symbol['textStyle']
         };
         return saveSymbol;
     },
 
-    _addEditEventToCell: function(cell) {
+    removeNumLabelByRowNum: function(rowNum) {
+        for (var i = this._geometryNumLabels.length - 1;  i >= rowNum - 1; i --) {
+            this._geometryNumLabels[i].remove();
+            this._geometryNumLabels.splice(i, 1);
+        }
+    },
+
+    _addEditEventToCell: function (cell) {
         cell.startEditText();
         var textEditor = cell._textEditor;
         textEditor.focus();
         var value = textEditor.value;
         textEditor.value = '';
-        if(value!='空') {
+        if (value !== '空') {
             textEditor.value = value;
         }
         var me = this;
-        cell.on('remove', function() {
-          if(cell.isEditingText()) {
-            cell.endEditText();
-          }
+        cell.on('remove', function () {
+            if (cell.isEditingText()) {
+                cell.endEditText();
+            }
         });
-        cell.on('edittextend', function(){
+        cell.on('edittextend', function () {
             var content = cell.getContent();
             var row = cell._row;
             var col = cell._col;
             var colIndex = me._columns[col]['dataIndex'];
-            if(this.options['header'] && row >0) {
-              me._data[row-1][colIndex] = content;
+            if (me.options['header'] && row > 0) {
+                me._data[row - 1][colIndex] = content;
             } else {
-              me._columns[col]['header'] = content;
+                me._columns[col]['header'] = content;
             }
         });
     },
 
-    _addNumberLabelToGeometry: function(coordinate, cell) {
+    _addNumberLabelToGeometry: function (coordinate, cell) {
         //设置label属性
-        var cellSymbol = cell.getSymbol();
-        var options = {
+        let cellSymbol = cell.getSymbol();
+        let numberLabelId = this.getId() + '_' + this.getRowNum(cell);
+        let options = {
+            'id': numberLabelId, 
             'symbol': this._convertCellSymbolToNumberSymbol(cellSymbol),
             'draggable': false,
             'boxAutoSize': false,
@@ -180,106 +199,107 @@ maptalks.Table.include(/** @lends maptalks.Table.prototype */{
             'boxMinHeight': 20
         };
         //创建label
-        var num = cell.getContent();
-        var numberLabel = new maptalks.Label(num, coordinate, options);
-        this._layer.addGeometry(numberLabel);
+        let num = cell.getContent();
+        let numberLabel = this.getLayer().getGeometryById(numberLabelId);
+        if(!numberLabel) {
+            numberLabel = new maptalks.Label(num, coordinate, options); 
+            this.getLayer().addGeometry(numberLabel);
+        }
         this._geometryNumLabels.push(numberLabel);
-        var me = this;
-        cell.on('remove', function(){
+        let me = this;
+        cell.on('remove', function () {
             me._removeNumLabel(numberLabel);
             numberLabel.remove();
         }, this);
-        cell.on('hide', function() {
-          numberLabel.hide();
+        cell.on('hide', function () {
+            numberLabel.hide();
         }, this);
-        cell.on('show', function() {
-          numberLabel.show();
+        cell.on('show', function () {
+            numberLabel.show();
         }, this);
-        var me = this;
-        cell.on('contentchange', function() {
-          var start = 0;
-          if(me.options['header']) {
-              start = -1;
-          }
-          var row = cell._row + start;
-          var item = me._data[row];
-          var _coordiante = item.coordinate;
-          if(_coordiante) numberLabel.setCoordinates(new maptalks.Coordinate(_coordiante.x, _coordiante.y));
+        cell.on('contentchange', () => {
+            let start = 0;
+            if (this.options['header']) {
+                start = -1;
+            }
+            let row = cell._row + start;
+            let item = this._data[row];
+            let _coordiante = item.coordinate;
+            if (_coordiante) numberLabel.setCoordinates(new maptalks.Coordinate(_coordiante.x, _coordiante.y));
         }, this);
-        var me = this;
-        cell.on('symbolchange', function(){
-            var symbol = me._convertCellSymbolToNumberSymbol(cell.getSymbol());
-            me._changeNumLabelSymbol(numberLabel, symbol);
+        cell.on('symbolchange', () => {
+            let symbol = this._convertCellSymbolToNumberSymbol(cell.getSymbol());
+            this._changeNumLabelSymbol(numberLabel, symbol);
             numberLabel.setSymbol(symbol);
-        },this);
-        cell.on('contentchange positionchanged', function(){
-            var number = cell.getContent();
-            me._changeNumLabelContent(numberLabel, number);
+        }, this);
+        cell.on('contentchange positionchanged', () => {
+            let number = cell.getContent();
+            this._changeNumLabelContent(numberLabel, number);
             numberLabel.setContent(number);
-        },this);
+        }, this);
     },
 
     _hideNumLabel: function () {
-      for (var i = 0; i < this._geometryNumLabels.length; i++) {
-        this._geometryNumLabels[i].hide();
-      }
+        for (var i = 0; i < this._geometryNumLabels.length; i++) {
+            this._geometryNumLabels[i].hide();
+        }
     },
 
     _showNumLabel: function () {
-      for (var i = 0; i < this._geometryNumLabels.length; i++) {
-        this._geometryNumLabels[i].show();
-      }
-    },
-
-    _removeNumLabel: function(label) {
-      for (var i = 0; i < this._geometryNumLabels.length; i++) {
-        if(label ===  this._geometryNumLabels[i]) {
-          this._geometryNumLabels.splice(i, 1);
-          break;
-        }
-      }
-    },
-
-    _changeNumLabelSymbol: function(label, symbol) {
-      for (var i = 0; i < this._geometryNumLabels.length; i++) {
-        if(label ===  this._geometryNumLabels[i]) {
-          this._geometryNumLabels[i].setSymbol(symbol);
-          break;
-        }
-      }
-    },
-
-    _changeNumLabelContent: function(label, content) {
         for (var i = 0; i < this._geometryNumLabels.length; i++) {
-          if(label ===  this._geometryNumLabels[i]) {
-            this._geometryNumLabels[i].setContent(content);
-            break;
-          }
+            this._geometryNumLabels[i].show();
         }
     },
 
-    _convertCellSymbolToNumberSymbol: function(cellSymbol){
+    _removeNumLabel: function (label) {
+        for (var i = 0; i < this._geometryNumLabels.length; i++) {
+            if (label ===  this._geometryNumLabels[i]) {
+                this._geometryNumLabels.splice(i, 1);
+                break;
+            }
+        }
+    },
+
+    _changeNumLabelSymbol: function (label, symbol) {
+        for (var i = 0; i < this._geometryNumLabels.length; i++) {
+            if (label ===  this._geometryNumLabels[i]) {
+                this._geometryNumLabels[i].setSymbol(symbol);
+                break;
+            }
+        }
+    },
+
+    _changeNumLabelContent: function (label, content) {
+        for (var i = 0; i < this._geometryNumLabels.length; i++) {
+            if (label ===  this._geometryNumLabels[i]) {
+                this._geometryNumLabels[i].setContent(content);
+                break;
+            }
+        }
+    },
+
+    _convertCellSymbolToNumberSymbol: function (cellSymbol) {
         var symbol = {
             'markerType' : 'ellipse',
-            'markerLineColor': '#ffffff',//cellSymbol['markerLineColor']||'#ffffff',
-            'markerLineWidth': 0,//cellSymbol['markerLineWidth']||1,
-            'markerLineOpacity': cellSymbol['markerLineOpacity']||0,
-            'markerFill': cellSymbol['markerFill']||'#4e98dd',
-            'markerFillOpacity': cellSymbol['markerFillOpacity']||1,
+            'markerLineColor': '#ffffff', //cellSymbol['markerLineColor']||'#ffffff',
+            'markerLineWidth': 0, //cellSymbol['markerLineWidth']||1,
+            'markerLineOpacity': cellSymbol['markerLineOpacity'] || 0,
+            'markerFill': cellSymbol['markerFill'] || '#4e98dd',
+            'markerFillOpacity': cellSymbol['markerFillOpacity'] || 1,
             'markerDx': 0,
             'markerDy': 0,
             'markerHeight' : 30,
             'markerWidth': 30,
 
-            'textFaceName': cellSymbol['textFaceName']||'microsoft yahei',
-            'textSize': cellSymbol['textSize']||12,
-            'textFill': cellSymbol['textFill']||'#ff0000',
-            'textOpacity': cellSymbol['textOpacity']||1,
-            'textSpacing': cellSymbol['textSpacing']||0,
+            'textFaceName': cellSymbol['textFaceName'] || 'microsoft yahei',
+            'textSize': cellSymbol['textSize'] || 12,
+            'textFill': cellSymbol['textFill'] || '#ff0000',
+            'textOpacity': cellSymbol['textOpacity'] || 1,
+            'textSpacing': cellSymbol['textSpacing'] || 0,
             'textWrapBefore': false,
-            'textLineSpacing': cellSymbol['textLineSpacing']||0,
-            'textHorizontalAlignment': cellSymbol['textHorizontalAlignment']||'middle',
-            'textVerticalAlignment': cellSymbol['textVerticalAlignment']||'middle',
+            'textLineSpacing': cellSymbol['textLineSpacing'] || 0,
+            'textHorizontalAlignment': cellSymbol['textHorizontalAlignment'] || 'middle',
+            'textVerticalAlignment': cellSymbol['textVerticalAlignment'] || 'middle',
             'textDx': 0,
             'textDy': 0
         };
@@ -287,9 +307,9 @@ maptalks.Table.include(/** @lends maptalks.Table.prototype */{
     },
 
     _filterContent: function (content) {
-        content = content+"";
-        var result = content.replace(/\r/ig, "").replace(/\v/ig, "").replace(/\f/ig, "").replace(/\t/ig, "").replace(/\b/ig, "")
-                 .replace(/\n\n/ig, "\n");
+        content = content + '';
+        var result = content.replace(/\r/ig, '').replace(/\v/ig, '').replace(/\f/ig, '').replace(/\t/ig, '').replace(/\b/ig, '')
+                 .replace(/\n\n/ig, '\n');
         return result;
     },
 
