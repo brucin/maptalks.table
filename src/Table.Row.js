@@ -60,7 +60,7 @@ Table.include(/** @lends Table.prototype */{
 
     updateRow(rowNum, item) {
         this.removeStretchLine();
-        rowNum = rowNum - parseInt(this.options['startNum']||1);
+        rowNum = rowNum - parseInt(this.options['startNum'] || 1);
         let tableRowNum = rowNum;
         if (this.options['header']) {
             tableRowNum = rowNum + 1;

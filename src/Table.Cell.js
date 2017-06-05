@@ -151,8 +151,8 @@ Table.include(/** @lends Table.prototype */{
         return saveSymbol;
     },
 
-    removeNumLabelByRowNum: function(rowNum) {
-        for (var i = this._geometryNumLabels.length - 1;  i >= rowNum - 1; i --) {
+    removeNumLabelByRowNum: function (rowNum) {
+        for (var i = this._geometryNumLabels.length - 1;  i >= rowNum - 1; i--) {
             this._geometryNumLabels[i].remove();
             this._geometryNumLabels.splice(i, 1);
         }
@@ -191,7 +191,7 @@ Table.include(/** @lends Table.prototype */{
         let cellSymbol = cell.getSymbol();
         let numberLabelId = this.getId() + '_' + this.getRowNum(cell);
         let options = {
-            'id': numberLabelId, 
+            'id': numberLabelId,
             'symbol': this._convertCellSymbolToNumberSymbol(cellSymbol),
             'draggable': false,
             'boxAutoSize': false,
@@ -201,8 +201,8 @@ Table.include(/** @lends Table.prototype */{
         //创建label
         let num = cell.getContent();
         let numberLabel = this.getLayer().getGeometryById(numberLabelId);
-        if(!numberLabel) {
-            numberLabel = new maptalks.Label(num, coordinate, options); 
+        if (!numberLabel) {
+            numberLabel = new maptalks.Label(num, coordinate, options);
             this.getLayer().addGeometry(numberLabel);
         }
         this._geometryNumLabels.push(numberLabel);

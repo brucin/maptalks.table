@@ -138,7 +138,6 @@ describe('Table', function () {
     describe('drag table', function () {
         it('can drag talbe', function () {
             let table = new maptalks.Table(tableOptions);
-            table.addTo(layer);
             dragTable(table);
             expect(table.getCoordinates()).not.to.be.closeTo(center);
             table.remove();
@@ -146,7 +145,6 @@ describe('Table', function () {
 
         it('disable table dragable', function () {
             let table = new maptalks.Table(tableOptions);
-            table.addTo(layer);
             table.config('draggable', false);
             dragTable(table);
             expect(table.getCoordinates()).to.be.closeTo(center);
