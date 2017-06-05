@@ -150,7 +150,7 @@ Table.include(/** @lends Table.prototype */{
     },
 
     setRowHeight(rowNum, height) {
-        let oldHeight = this._rowHeights[rowNum];
+        let oldHeight = this.getRowHeight(rowNum);
         let offset = height - oldHeight;
         this.setRowOffset(rowNum, offset);
     },
@@ -181,6 +181,7 @@ Table.include(/** @lends Table.prototype */{
                 this.tableSymbols[i + '_' + j] = symbol;
             }
         }
+        this.tableHeight += heightOffset;
         this.fire('heightchanged', this);
     },
 

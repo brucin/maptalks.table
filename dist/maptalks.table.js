@@ -1306,7 +1306,7 @@ Table.include( /** @lends Table.prototype */{
 Table.include( /** @lends Table.prototype */{
 
     /**
-     * 添加一列
+     * add column
      * @param {Number} colNum 添加新列的位置
      * @param {Object} data 添加的列数据
      * @param {Boolean} right :true,右侧;false,左侧
@@ -1320,197 +1320,6 @@ Table.include( /** @lends Table.prototype */{
         return this;
     },
 
-    _createCol: function _createCol(insertColNum, data, add) {
-        this.removeStretchLine();
-        var startCol = insertColNum; //调整起始列
-        if (!data || data.length === 0) data = '';
-        //insert column
-        var cells = [];
-        var insertColLength = 1;
-        var colCell = void 0;
-        if (maptalks.Util.isArrayHasData(data[0])) {
-            insertColLength = data.length;
-            colCell = [];
-            for (var i = 0, len = data.length; i < len; i++) {
-                for (var j = 0; j < this._rowNum; j++) {
-                    var tempCell = this._addCellForColumn(data[i][0], data[i][j], j, insertColNum + i, add);
-                    this._tableRows[j].splice(insertColNum + i, 0, tempCell);
-                }
-            }
-            cells.push(colCell);
-        } else {
-            for (var _i = 0; _i < this._rowNum; _i++) {
-                var _tempCell = this._addCellForColumn(data[0], data[_i], _i, insertColNum, add);
-                this._tableRows[_i].splice(insertColNum, 0, _tempCell);
-            }
-        }
-        this._colNum += insertColLength;
-        //调整之后的列
-        this._adjustDatasetForCol(startCol, insertColLength);
-    },
-
-    _addCellForColumn: function _addCellForColumn(header, item, rowNum, colNum, add) {
-        var cellOffset = void 0,
-            symbol = void 0,
-            size = void 0,
-            cellWidth = void 0,
-            cell = void 0;
-        if (add) {
-            var prevColNum = colNum - 1;
-            var offset = this.getCellOffset(rowNum, prevColNum);
-            var prevCellWidth = this._colWidths[prevColNum];
-            if (rowNum === 0) {
-                cellOffset = {
-                    'dx': offset.dx + (prevCellWidth + this._cellWidth) / 2,
-                    'dy': offset.dy
-                };
-            } else {
-                cellOffset = this.getCellOffset(rowNum, colNum);
-            }
-            symbol = this.options['symbol'];
-            if (this.options['header'] && rowNum === 0) {
-                symbol = this.options['headerSymbol'];
-            }
-            cellWidth = this._cellWidth;
-            size = new maptalks.Size(this._cellWidth, this._rowHeights[rowNum]);
-        } else {
-            cellOffset = this.getCellOffset(rowNum, colNum);
-            symbol = this.getCellSymbol(rowNum, colNum);
-            cellWidth = this._colWidths[colNum];
-            size = new maptalks.Size(cellWidth, this._rowHeights[rowNum]);
-        }
-        if (rowNum === 0) {
-            var column = { header: header, dataIndex: header, type: 'string' };
-            this._columns.splice(colNum, 0, column);
-            cell = this.createCell(header, cellOffset, size, symbol);
-            this.tableWidth += cellWidth;
-            this._colWidths.splice(colNum, 0, cellWidth);
-        } else {
-            cell = this.createCell(item, cellOffset, size, symbol);
-            //update table data
-            if (this.options['header']) {
-                --rowNum;
-            }
-            this._data[rowNum][header] = item;
-        }
-        cell._row = rowNum;
-        cell._col = colNum;
-        cell.dataIndex = header;
-        this.tableSymbols[rowNum + '_' + colNum] = symbol;
-        this._addEventsToCell(cell).addTo(this._layer);
-        return cell;
-    },
-
-    moveCol: function moveCol(sourceColNum, direction) {
-        this.stopEditTable();
-        this.removeStretchLine();
-        var targetColNum = sourceColNum;
-        if (direction === 'left') {
-            if (sourceColNum > 0) {
-                targetColNum = sourceColNum - 1;
-            }
-        } else if (direction === 'right') {
-            if (sourceColNum < this._colNum - 1) {
-                targetColNum = sourceColNum + 1;
-            }
-        }
-        this._changeColOrder(sourceColNum, targetColNum);
-    },
-
-    _changeColOrder: function _changeColOrder(sourceColNum, targetColNum) {
-        if (sourceColNum === targetColNum) {
-            return;
-        }
-        // let start = 0;
-        // if (this.options['header']) {
-        //     start = -1;
-        // }
-        var firstRow = this._tableRows[0];
-        var firstSourceCell = firstRow[sourceColNum];
-        var sourceCellRow = firstSourceCell._row;
-        var sourceCellCol = firstSourceCell._col;
-        var sourceColWidth = this._colWidths[sourceColNum];
-        var sourceColDx = this.getCellOffset(sourceCellRow, sourceCellCol).dx;
-
-        var firstTargetCell = firstRow[targetColNum];
-        var targetCellRow = firstTargetCell._row;
-        var targetCellCol = firstTargetCell._col;
-        var targetColWidth = this._colWidths[targetColNum];
-        var targetColDx = this.getCellOffset(targetCellRow, targetCellCol).dx;
-
-        if (sourceColDx < targetColDx) {
-            sourceColDx = sourceColDx + targetColWidth;
-            targetColDx = targetColDx - sourceColWidth;
-        } else {
-            sourceColDx = sourceColDx - targetColWidth;
-            targetColDx = targetColDx + sourceColWidth;
-        }
-        //调整列位置
-        var row = void 0,
-            sourceCellSymbol = void 0,
-            targetCellSymbol = void 0,
-            temp = void 0;
-        for (var i = 0, len = this._tableRows.length; i < len; i++) {
-            row = this._tableRows[i];
-            if (!row) return;
-            sourceCellSymbol = row[sourceColNum].getSymbol();
-            sourceCellSymbol['markerDx'] = sourceColDx;
-            sourceCellSymbol['textDx'] = sourceColDx;
-            row[sourceColNum].setSymbol(sourceCellSymbol);
-            row[sourceColNum]._col = targetColNum;
-
-            targetCellSymbol = row[targetColNum].getSymbol();
-            targetCellSymbol['markerDx'] = targetColDx;
-            targetCellSymbol['textDx'] = targetColDx;
-            row[targetColNum].setSymbol(targetCellSymbol);
-            row[targetColNum]._col = sourceColNum;
-            temp = row[sourceColNum];
-            row[sourceColNum] = row[targetColNum];
-            row[targetColNum] = temp;
-        }
-        //调整table相关的内存数组
-        this._colWidths[sourceColNum] = this._colWidths[targetColNum];
-        this._colWidths[targetColNum] = sourceColWidth;
-        //调整列次序
-        var sourceColumn = this._columns[sourceColNum];
-        this._columns[sourceColNum] = this._columns[targetColNum];
-        this._columns[targetColNum] = sourceColumn;
-    },
-
-    _adjustDatasetForCol: function _adjustDatasetForCol(start, insertColLength) {
-        var startPoint = this.options['position'];
-        var map = this._layer.getMap();
-        var rowData = void 0,
-            cell = void 0,
-            colLine = void 0,
-            size = void 0,
-            symbol = void 0,
-            dx = void 0,
-            upPoint = void 0,
-            downPoint = void 0;
-        for (var i = 0, len = this._tableRows.length; i < len; i++) {
-            rowData = this._tableRows[i];
-            if (!rowData) return;
-            for (var j = start + 1, rowLength = rowData.length; j < rowLength; j++) {
-                cell = rowData[j];
-                cell._col += insertColLength;
-                cell.fire('symbolchange', cell);
-                this._translateDx(cell, this._cellWidth);
-                //调整交互列
-                if (i === 0) {
-                    if (this._adjustCols) {
-                        colLine = this._adjustCols[j];
-                        size = cell.getSize();
-                        symbol = cell.getSymbol();
-                        dx = symbol['textDx'];
-                        upPoint = map.locate(startPoint, map.pixelToDistance(size['width'] / 2 + dx, 0), map.pixelToDistance(0, size['height'] / 2));
-                        downPoint = map.locate(upPoint, 0, -map.pixelToDistance(0, this.tableHeight));
-                        colLine.setCoordinates([upPoint, downPoint]);
-                    }
-                }
-            }
-        }
-    },
 
     /**
      * 删除列
@@ -1575,14 +1384,242 @@ Table.include( /** @lends Table.prototype */{
         //移除列数据
         this._colNum -= 1;
     },
+    moveCol: function moveCol(sourceColNum, direction) {
+        this.stopEditTable();
+        this.removeStretchLine();
+        var targetColNum = sourceColNum;
+        if (direction === 'left') {
+            if (sourceColNum > 0) {
+                targetColNum = sourceColNum - 1;
+            }
+        } else if (direction === 'right') {
+            if (sourceColNum < this._colNum - 1) {
+                targetColNum = sourceColNum + 1;
+            }
+        }
+        this._changeColOrder(sourceColNum, targetColNum);
+    },
+    getColumn: function getColumn(colNum) {
+        var result = [];
+        for (var i = 0; i < this._rowNum; i++) {
+            result.push(this._tableRows[i][colNum]);
+        }
+        return result;
+    },
+    getColumnWidth: function getColumnWidth(colNum) {
+        return this._colWidths[colNum];
+    },
+    setColumnWidth: function setColumnWidth(colNum, width) {
+        var oldWidth = this.getColumnWidth(colNum);
+        var offset = width - oldWidth;
+        this.setColumnOffset(colNum, offset);
+    },
+    setColumnOffset: function setColumnOffset(colNum, widthOffset) {
+        this._colWidths[colNum] += widthOffset;
+        var newWidth = this._colWidths[colNum];
+        var row = void 0,
+            cell = void 0,
+            symbol = void 0;
+        for (var i = 0, len = this._tableRows.length; i < len; i++) {
+            row = this._tableRows[i];
+            if (!row) return;
+            for (var j = colNum, rowLength = row.length; j < rowLength; j++) {
+                cell = row[j];
+                symbol = cell.getSymbol();
+                if (j === colNum) {
+                    cell.options['boxMinWidth'] = newWidth;
+                    symbol['markerWidth'] = cell.options['boxMinWidth'];
+                    symbol['textWrapWidth'] = cell.options['boxMinWidth'];
+                    symbol['markerDx'] += widthOffset / 2;
+                    symbol['textDx'] += widthOffset / 2;
+                } else {
+                    symbol['markerDx'] += widthOffset;
+                    symbol['textDx'] += widthOffset;
+                }
+                cell.setSymbol(symbol);
+            }
+        }
+        this.tableWidth += widthOffset;
+        this.fire('widthchanged', this);
+    },
+    _createCol: function _createCol(insertColNum, data, add) {
+        this.removeStretchLine();
+        var startCol = insertColNum; //调整起始列
+        if (!data || data.length === 0) data = '';
+        //insert column
+        var cells = [];
+        var insertColLength = 1;
+        var colCell = void 0;
+        if (maptalks.Util.isArrayHasData(data[0])) {
+            insertColLength = data.length;
+            colCell = [];
+            for (var i = 0, len = data.length; i < len; i++) {
+                for (var j = 0; j < this._rowNum; j++) {
+                    var tempCell = this._addCellForColumn(data[i][0], data[i][j], j, insertColNum + i, add);
+                    this._tableRows[j].splice(insertColNum + i, 0, tempCell);
+                }
+            }
+            cells.push(colCell);
+        } else {
+            for (var _i = 0; _i < this._rowNum; _i++) {
+                var _tempCell = this._addCellForColumn(data[0], data[_i], _i, insertColNum, add);
+                this._tableRows[_i].splice(insertColNum, 0, _tempCell);
+            }
+        }
+        this._colNum += insertColLength;
+        //调整之后的列
+        this._adjustDatasetForCol(startCol, insertColLength);
+    },
+    _addCellForColumn: function _addCellForColumn(header, item, rowNum, colNum, add) {
+        var cellOffset = void 0,
+            symbol = void 0,
+            size = void 0,
+            cellWidth = void 0,
+            cell = void 0;
+        if (add) {
+            var prevColNum = colNum - 1;
+            var offset = this.getCellOffset(rowNum, prevColNum);
+            var prevCellWidth = this._colWidths[prevColNum];
+            if (rowNum === 0) {
+                cellOffset = {
+                    'dx': offset.dx + (prevCellWidth + this._cellWidth) / 2,
+                    'dy': offset.dy
+                };
+            } else {
+                cellOffset = this.getCellOffset(rowNum, colNum);
+            }
+            symbol = this.options['symbol'];
+            if (this.options['header'] && rowNum === 0) {
+                symbol = this.options['headerSymbol'];
+            }
+            cellWidth = this._cellWidth;
+            size = new maptalks.Size(this._cellWidth, this._rowHeights[rowNum]);
+        } else {
+            cellOffset = this.getCellOffset(rowNum, colNum);
+            symbol = this.getCellSymbol(rowNum, colNum);
+            cellWidth = this._colWidths[colNum];
+            size = new maptalks.Size(cellWidth, this._rowHeights[rowNum]);
+        }
+        if (rowNum === 0) {
+            var column = { header: header, dataIndex: header, type: 'string' };
+            this._columns.splice(colNum, 0, column);
+            cell = this.createCell(header, cellOffset, size, symbol);
+            this.tableWidth += cellWidth;
+            this._colWidths.splice(colNum, 0, cellWidth);
+        } else {
+            cell = this.createCell(item, cellOffset, size, symbol);
+            //update table data
+            if (this.options['header']) {
+                --rowNum;
+            }
+            this._data[rowNum][header] = item;
+        }
+        cell._row = rowNum;
+        cell._col = colNum;
+        cell.dataIndex = header;
+        this.tableSymbols[rowNum + '_' + colNum] = symbol;
+        this._addEventsToCell(cell).addTo(this._layer);
+        return cell;
+    },
+    _changeColOrder: function _changeColOrder(sourceColNum, targetColNum) {
+        if (sourceColNum === targetColNum) {
+            return;
+        }
+        // let start = 0;
+        // if (this.options['header']) {
+        //     start = -1;
+        // }
+        var firstRow = this._tableRows[0];
+        var firstSourceCell = firstRow[sourceColNum];
+        var sourceCellRow = firstSourceCell._row;
+        var sourceCellCol = firstSourceCell._col;
+        var sourceColWidth = this._colWidths[sourceColNum];
+        var sourceColDx = this.getCellOffset(sourceCellRow, sourceCellCol).dx;
 
+        var firstTargetCell = firstRow[targetColNum];
+        var targetCellRow = firstTargetCell._row;
+        var targetCellCol = firstTargetCell._col;
+        var targetColWidth = this._colWidths[targetColNum];
+        var targetColDx = this.getCellOffset(targetCellRow, targetCellCol).dx;
+
+        if (sourceColDx < targetColDx) {
+            sourceColDx = sourceColDx + targetColWidth;
+            targetColDx = targetColDx - sourceColWidth;
+        } else {
+            sourceColDx = sourceColDx - targetColWidth;
+            targetColDx = targetColDx + sourceColWidth;
+        }
+        //调整列位置
+        var row = void 0,
+            sourceCellSymbol = void 0,
+            targetCellSymbol = void 0,
+            temp = void 0;
+        for (var i = 0, len = this._tableRows.length; i < len; i++) {
+            row = this._tableRows[i];
+            if (!row) return;
+            sourceCellSymbol = row[sourceColNum].getSymbol();
+            sourceCellSymbol['markerDx'] = sourceColDx;
+            sourceCellSymbol['textDx'] = sourceColDx;
+            row[sourceColNum].setSymbol(sourceCellSymbol);
+            row[sourceColNum]._col = targetColNum;
+
+            targetCellSymbol = row[targetColNum].getSymbol();
+            targetCellSymbol['markerDx'] = targetColDx;
+            targetCellSymbol['textDx'] = targetColDx;
+            row[targetColNum].setSymbol(targetCellSymbol);
+            row[targetColNum]._col = sourceColNum;
+            temp = row[sourceColNum];
+            row[sourceColNum] = row[targetColNum];
+            row[targetColNum] = temp;
+        }
+        //调整table相关的内存数组
+        this._colWidths[sourceColNum] = this._colWidths[targetColNum];
+        this._colWidths[targetColNum] = sourceColWidth;
+        //调整列次序
+        var sourceColumn = this._columns[sourceColNum];
+        this._columns[sourceColNum] = this._columns[targetColNum];
+        this._columns[targetColNum] = sourceColumn;
+    },
+    _adjustDatasetForCol: function _adjustDatasetForCol(start, insertColLength) {
+        var startPoint = this.options['position'];
+        var map = this._layer.getMap();
+        var rowData = void 0,
+            cell = void 0,
+            colLine = void 0,
+            size = void 0,
+            symbol = void 0,
+            dx = void 0,
+            upPoint = void 0,
+            downPoint = void 0;
+        for (var i = 0, len = this._tableRows.length; i < len; i++) {
+            rowData = this._tableRows[i];
+            if (!rowData) return;
+            for (var j = start + 1, rowLength = rowData.length; j < rowLength; j++) {
+                cell = rowData[j];
+                cell._col += insertColLength;
+                cell.fire('symbolchange', cell);
+                this._translateDx(cell, this._cellWidth);
+                //调整交互列
+                if (i === 0) {
+                    if (this._adjustCols) {
+                        colLine = this._adjustCols[j];
+                        size = cell.getSize();
+                        symbol = cell.getSymbol();
+                        dx = symbol['textDx'];
+                        upPoint = map.locate(startPoint, map.pixelToDistance(size['width'] / 2 + dx, 0), map.pixelToDistance(0, size['height'] / 2));
+                        downPoint = map.locate(upPoint, 0, -map.pixelToDistance(0, this.tableHeight));
+                        colLine.setCoordinates([upPoint, downPoint]);
+                    }
+                }
+            }
+        }
+    },
     _translateDx: function _translateDx(cell, width) {
         var symbol = cell.getSymbol();
         symbol['markerDx'] += width;
         symbol['textDx'] += width;
         cell.setSymbol(symbol);
     }
-
 });
 
 var DRAG_STAGE_LAYER_ID = maptalks.INTERNAL_LAYER_PREFIX + '_drag_stage';
@@ -2022,7 +2059,7 @@ Table.include( /** @lends Table.prototype */{
         return this._rowHeights[rowNum];
     },
     setRowHeight: function setRowHeight(rowNum, height) {
-        var oldHeight = this._rowHeights[rowNum];
+        var oldHeight = this.getRowHeight(rowNum);
         var offset = height - oldHeight;
         this.setRowOffset(rowNum, offset);
     },
@@ -2054,6 +2091,7 @@ Table.include( /** @lends Table.prototype */{
                 this.tableSymbols[i + '_' + j] = symbol;
             }
         }
+        this.tableHeight += heightOffset;
         this.fire('heightchanged', this);
     },
     _createRow: function _createRow(index, item, add) {

@@ -3,12 +3,12 @@ import Table from './Table';
 Table.include(/** @lends Table.prototype */{
 
   /**
-   * 添加一列
+   * add column
    * @param {Number} colNum 添加新列的位置
    * @param {Object} data 添加的列数据
    * @param {Boolean} right :true,右侧;false,左侧
    */
-    addCol: function (colNum, data, right) {
+    addCol(colNum, data, right) {
         let insertColNum = colNum + 1;
         if (!right) {
             insertColNum = colNum;
@@ -17,7 +17,125 @@ Table.include(/** @lends Table.prototype */{
         return this;
     },
 
-    _createCol: function (insertColNum, data, add) {
+    /**
+     * 删除列
+     * @param {Number} colNum 列号
+     */
+    removeCol(colNum) {
+        this.stopEditTable();
+        this.removeStretchLine();
+        let firstRow = this._tableRows[0];
+        let removeCell = firstRow[colNum];
+        let removeSize = removeCell.getSize();
+        let startPoint = this.options['position'];
+        let map = this._layer.getMap();
+        let row, cell, colLine, size, symbol, dx, upPoint, downPoint;
+        for (let i = 0, len = this._tableRows.length; i < len; i++) {
+            row = this._tableRows[i];
+            if (!row) return;
+            for (let j = colNum, rowLength = row.length; j < rowLength; j++) {
+                cell = row[j];
+                if (i === 0 && j === colNum) {
+                    //表格宽度缩短
+                    this.tableWidth -= removeSize['width'];
+                }
+                if (j > colNum) {
+                    this._translateDx(cell, -removeSize['width'] + 1);
+                    if (i === 0) {
+                        if (this._adjustCols) {
+                            colLine = this._adjustCols[cell._col];
+                            size = cell.getSize();
+                            symbol = cell.getSymbol();
+                            dx = symbol['textDx'];
+                            upPoint = map.locate(startPoint, map.pixelToDistance(size['width'] / 2 + dx, 0), map.pixelToDistance(0, size['height'] / 2));
+                            downPoint = map.locate(upPoint, 0, -map.pixelToDistance(0, this.tableHeight));
+                            colLine.setCoordinates([upPoint, downPoint]);
+                        }
+                    }
+                    cell._col -= 1;
+                } else {
+                    cell.remove();
+                }
+            }
+            //删除列数据
+            this._tableRows[i].splice(colNum, 1);
+            if (this.options['header']) {
+                if (i > 0) {
+                    delete this._data[i - 1][removeCell.dataIndex];
+                }
+            } else {
+                delete this._data[i][removeCell.dataIndex];
+            }
+        }
+        this._colWidths.splice(colNum, 1);
+        //移除列数据
+        this._columns.splice(colNum, 1);
+        //移除列数据
+        this._colNum -= 1;
+    },
+
+    moveCol(sourceColNum, direction) {
+        this.stopEditTable();
+        this.removeStretchLine();
+        let targetColNum = sourceColNum;
+        if (direction === 'left') {
+            if (sourceColNum > 0) {
+                targetColNum = sourceColNum - 1;
+            }
+        } else if (direction === 'right') {
+            if (sourceColNum < this._colNum - 1) {
+                targetColNum = sourceColNum + 1;
+            }
+        }
+        this._changeColOrder(sourceColNum, targetColNum);
+    },
+
+    getColumn(colNum) {
+        let result = [];
+        for (let i = 0; i < this._rowNum; i++) {
+            result.push(this._tableRows[i][colNum]);
+        }
+        return result;
+    },
+
+    getColumnWidth(colNum) {
+        return this._colWidths[colNum];
+    },
+
+    setColumnWidth(colNum, width) {
+        let oldWidth = this.getColumnWidth(colNum);
+        let offset = width - oldWidth;
+        this.setColumnOffset(colNum, offset);        
+    },
+
+    setColumnOffset(colNum, widthOffset) {
+        this._colWidths[colNum] += widthOffset;
+        let newWidth = this._colWidths[colNum];
+        let row, cell, symbol;
+        for (let i = 0, len = this._tableRows.length; i < len; i++) {
+            row = this._tableRows[i];
+            if (!row) return;
+            for (let j = colNum, rowLength = row.length; j < rowLength; j++) {
+                cell = row[j];
+                symbol = cell.getSymbol();
+                if (j === colNum) {
+                    cell.options['boxMinWidth'] = newWidth;
+                    symbol['markerWidth'] = cell.options['boxMinWidth'];
+                    symbol['textWrapWidth'] = cell.options['boxMinWidth'];
+                    symbol['markerDx'] += widthOffset / 2;
+                    symbol['textDx'] += widthOffset / 2;
+                } else {
+                    symbol['markerDx'] += widthOffset;
+                    symbol['textDx'] += widthOffset;
+                }
+                cell.setSymbol(symbol);
+            }
+        }
+        this.tableWidth += widthOffset;
+        this.fire('widthchanged', this);
+    },
+
+    _createCol(insertColNum, data, add) {
         this.removeStretchLine();
         let startCol = insertColNum;//调整起始列
         if (!data || data.length === 0) data = '';
@@ -46,7 +164,7 @@ Table.include(/** @lends Table.prototype */{
         this._adjustDatasetForCol(startCol, insertColLength);
     },
 
-    _addCellForColumn: function (header, item, rowNum, colNum, add) {
+    _addCellForColumn(header, item, rowNum, colNum, add) {
         let cellOffset, symbol, size, cellWidth, cell;
         if (add) {
             let prevColNum = colNum - 1;
@@ -94,23 +212,7 @@ Table.include(/** @lends Table.prototype */{
         return cell;
     },
 
-    moveCol: function (sourceColNum, direction) {
-        this.stopEditTable();
-        this.removeStretchLine();
-        var targetColNum = sourceColNum;
-        if (direction === 'left') {
-            if (sourceColNum > 0) {
-                targetColNum = sourceColNum - 1;
-            }
-        } else if (direction === 'right') {
-            if (sourceColNum < this._colNum - 1) {
-                targetColNum = sourceColNum + 1;
-            }
-        }
-        this._changeColOrder(sourceColNum, targetColNum);
-    },
-
-    _changeColOrder: function (sourceColNum, targetColNum) {
+    _changeColOrder(sourceColNum, targetColNum) {
         if (sourceColNum === targetColNum) { return; }
         // let start = 0;
         // if (this.options['header']) {
@@ -165,7 +267,7 @@ Table.include(/** @lends Table.prototype */{
         this._columns[targetColNum] = sourceColumn;
     },
 
-    _adjustDatasetForCol: function (start, insertColLength) {
+    _adjustDatasetForCol(start, insertColLength) {
         let startPoint = this.options['position'];
         let map = this._layer.getMap();
         let rowData, cell, colLine, size, symbol, dx, upPoint, downPoint;
@@ -193,65 +295,8 @@ Table.include(/** @lends Table.prototype */{
         }
     },
 
-    /**
-     * 删除列
-     * @param {Number} colNum 列号
-     */
-    removeCol: function (colNum) {
-        this.stopEditTable();
-        this.removeStretchLine();
-        let firstRow = this._tableRows[0];
-        let removeCell = firstRow[colNum];
-        let removeSize = removeCell.getSize();
-        let startPoint = this.options['position'];
-        let map = this._layer.getMap();
-        let row, cell, colLine, size, symbol, dx, upPoint, downPoint;
-        for (let i = 0, len = this._tableRows.length; i < len; i++) {
-            row = this._tableRows[i];
-            if (!row) return;
-            for (let j = colNum, rowLength = row.length; j < rowLength; j++) {
-                cell = row[j];
-                if (i === 0 && j === colNum) {
-                    //表格宽度缩短
-                    this.tableWidth -= removeSize['width'];
-                }
-                if (j > colNum) {
-                    this._translateDx(cell, -removeSize['width'] + 1);
-                    if (i === 0) {
-                        if (this._adjustCols) {
-                            colLine = this._adjustCols[cell._col];
-                            size = cell.getSize();
-                            symbol = cell.getSymbol();
-                            dx = symbol['textDx'];
-                            upPoint = map.locate(startPoint, map.pixelToDistance(size['width'] / 2 + dx, 0), map.pixelToDistance(0, size['height'] / 2));
-                            downPoint = map.locate(upPoint, 0, -map.pixelToDistance(0, this.tableHeight));
-                            colLine.setCoordinates([upPoint, downPoint]);
-                        }
-                    }
-                    cell._col -= 1;
-                } else {
-                    cell.remove();
-                }
-            }
-            //删除列数据
-            this._tableRows[i].splice(colNum, 1);
-            if (this.options['header']) {
-                if (i > 0) {
-                    delete this._data[i - 1][removeCell.dataIndex];
-                }
-            } else {
-                delete this._data[i][removeCell.dataIndex];
-            }
-        }
-        this._colWidths.splice(colNum, 1);
-        //移除列数据
-        this._columns.splice(colNum, 1);
-        //移除列数据
-        this._colNum -= 1;
-    },
-
-    _translateDx: function (cell, width) {
-        var symbol = cell.getSymbol();
+    _translateDx(cell, width) {
+        let symbol = cell.getSymbol();
         symbol['markerDx'] += width;
         symbol['textDx'] += width;
         cell.setSymbol(symbol);

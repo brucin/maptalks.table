@@ -336,5 +336,19 @@ describe('Table', function () {
             expect(newDy - oldDy).to.be.equal(60 - oldRowHeight);
             table.remove();
         });
+
+        it('set column width', function () {
+            let table = new maptalks.Table(tableOptions);
+            table.addTo(layer);
+            let oldColumn = table.getColumn(2);
+            let oldDx = oldColumn[0].getSymbol().markerDx;
+            let oldColumnWidth = table.getColumnWidth(1);
+            table.setColumnWidth(1, 100);
+            expect(table.getColumnWidth(1)).to.be.equal(100);
+            let newColumn = table.getColumn(2);
+            let newDx = newColumn[0].getSymbol().markerDx;
+            expect(newDx - oldDx).to.be.equal(100 - oldColumnWidth);
+            table.remove();
+        });
     });
 });
