@@ -17,7 +17,6 @@ Table.include(/** @lends Table.prototype */{
             cell.dataIndex = col['dataIndex'];
             headerRow.push(cell);
         }
-        this.tableHeight += this._rowHeights[0];
         return headerRow;
     }
 

@@ -142,8 +142,6 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         if (this.options['header']) {
             this._rowNum += 1;
         }
-        this.tableWidth = this.options['width'] || 0;
-        this.tableHeight = 0;
         this._cellWidth = this.options['width'] / this._colNum;
         this._cellHeight = this.options['height'] / this._rowNum;
         this._currentRow = -1;
@@ -151,6 +149,8 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         this._geometryNumLabels = [];
         this._rowHeights = [];
         this._colWidths = [];
+        this.tableWidth = 0;
+        this.tableHeight = 0;
         this._initRowHeightAndColWidth();
         this.tableSymbols = this._initCellSymbol();
         return this;
@@ -213,7 +213,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         this._rowNum = json['rowNum'];
         this._rowHeights = json['rowHeights'];
         this._colWidths = json['colWidths'];
-        this.tableWidth = json['tableWidth'];
+        // this.tableWidth = json['tableWidth'];
         this._tableRows = this._data;
         this.tableSymbols = json['tableSymbols'] || this._initCellSymbol();
         return this;
@@ -273,6 +273,14 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         return this._colWidths[colNum];
     }
 
+    getTableWidth() {
+        return this.tableWidth;
+    }
+
+    getTableHeight() {
+        return this.tableHeight;
+    }
+
     /**
      * add table to layer.
      * @param {maptalks.Layer} layer
@@ -282,7 +290,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         this._layer = layer;
         this._tableRows = this.createTable();
         this._addToLayer(this._tableRows, true);
-        this.addStretchLine();
+        // this.addStretchLine();
         this._addEventsToTable();
     }
 
@@ -295,6 +303,12 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
                 }
             });
         }
+        let me = this;
+        this.on('click', function (event) {
+            let map = me.getMap();
+            map.options['doubleClickZoom'] = false;
+            me.prepareAdjust();
+        });
     }
 
     getLayer() {
@@ -339,6 +353,12 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
                 this._calculateHeaderHeight();
             }
             this._calculateRowHeight();
+        }
+        for (let i = 0; i < this._rowHeights.length; i++) {
+            this.tableHeight += this._rowHeights[i];
+        }
+        for (let i = 0; i < this._colWidths.length; i++) {
+            this.tableWidth += this._colWidths[i];
         }
     }
 
@@ -433,7 +453,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
                 row[j].hide();
             }
         }
-        this.removeStretchLine();
+        // this.removeStretchLine();
         this.fire('hide', this);
         this.options['visible'] = false;
     }
@@ -498,7 +518,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         //抛出事件
         this.fire('remove', this);
         //删除调整线
-        this.removeStretchLine();
+        // this.removeStretchLine();
         //清理table上其它属性
         this._deleteTable();
     }

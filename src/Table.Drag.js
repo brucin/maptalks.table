@@ -40,7 +40,7 @@ class TableDragHandler extends maptalks.Handler  {
             return;
         }
         this.target.on('click', this._endDrag, this);
-        this.target.removeStretchLine();
+        // this.target.removeStretchLine();
         this._lastPos = param['coordinate'];
         this._prepareMap();
         this._prepareDragHandler();

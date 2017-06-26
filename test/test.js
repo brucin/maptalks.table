@@ -162,6 +162,21 @@ describe('Table', function () {
             table.remove();
         });
 
+        it('check next row position after add new row', function () {
+            let table = new maptalks.Table(tableOptions);
+            table.addTo(layer);
+            let oldRow = table.getRow(1);
+            let oldDy = oldRow[0].getSymbol().markerDy;
+            let oldRowHeight = table.getRowHeight(1);
+            let data = { 'titleOne' : 'newOne', 'titleTwo' : 'newTwo', 'titleThree' : 'newThree' };
+            table.addRow(1, data, true);
+            let newRow = table.getRow(2);
+            let newDy = newRow[0].getSymbol().markerDy;
+            let newRowHeight = table.getRowHeight(1);
+            expect(newDy - oldDy).to.be.equal(newRowHeight);
+            table.remove();
+        });
+
         it('add multi rows to the table', function () {
             let table = new maptalks.Table(tableOptions);
             table.addTo(layer);
@@ -283,6 +298,7 @@ describe('Table', function () {
             table.addTo(dynamicLayer);
             let numberLabelId = table.getId() + '_1';
             let numberLabel = dynamicLayer.getGeometryById(numberLabelId);
+            let geometries = dynamicLayer.getGeometries();
             expect(numberLabel.getCenter()).to.be.closeTo(center);
             let newPosition = new maptalks.Coordinate(119.846825, 30.046534);
             marker.setCoordinates(newPosition);

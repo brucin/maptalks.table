@@ -70,6 +70,8 @@
       function markerGrid(param) {
         map.off('click', markerGrid);
         var coordinate = param.coordinate;
+        console.log('coordniate:');
+        console.log(coordinate);
         var tableId = 'NWP_TABLE_'+ maptalks.Util.GUID();
         var tableOptions = {
             'id': tableId,
@@ -114,12 +116,12 @@
         };
         var table = new maptalks.Table(tableOptions);
         table.addTo(layer);
-        var tableToolbox = new TableToolbox();
-        tableToolbox.addTo(table);
-        tableToolbox.hide();
-        table.on('remove', function(){
-            tableToolbox.remove();
-        });
+        // var tableToolbox = new TableToolbox();
+        // tableToolbox.addTo(table);
+        // tableToolbox.hide();
+        // table.on('remove', function(){
+        //     tableToolbox.remove();
+        // });
         table._currentRow = 0;
         table._currentCol = 0;
     }

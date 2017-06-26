@@ -23,7 +23,7 @@ Table.include(/** @lends Table.prototype */{
      */
     removeCol(colNum) {
         this.stopEditTable();
-        this.removeStretchLine();
+        // this.removeStretchLine();
         let firstRow = this._tableRows[0];
         let removeCell = firstRow[colNum];
         let removeSize = removeCell.getSize();
@@ -76,7 +76,7 @@ Table.include(/** @lends Table.prototype */{
 
     moveCol(sourceColNum, direction) {
         this.stopEditTable();
-        this.removeStretchLine();
+        // this.removeStretchLine();
         let targetColNum = sourceColNum;
         if (direction === 'left') {
             if (sourceColNum > 0) {
@@ -88,6 +88,10 @@ Table.include(/** @lends Table.prototype */{
             }
         }
         this._changeColOrder(sourceColNum, targetColNum);
+    },
+
+    getColumnNum() {
+        return this._colNum;
     },
 
     getColumn(colNum) {
@@ -136,7 +140,7 @@ Table.include(/** @lends Table.prototype */{
     },
 
     _createCol(insertColNum, data, add) {
-        this.removeStretchLine();
+        // this.removeStretchLine();
         let startCol = insertColNum;//调整起始列
         if (!data || data.length === 0) data = '';
         //insert column

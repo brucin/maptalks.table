@@ -19,7 +19,7 @@ Table.include(/** @lends Table.prototype */{
                 return;
             }
         });
-        this.on('mouseout', function () { me.getMap().options['doubleClickZoom'] = true; })
+        this.on('mouseout', function () { me.getMap().options['doubleClickZoom'] = true; });
         .on('dragstart', this.removeStretchLine);
         this.getMap().on('movestart dragstart zoomstart resize', this.removeStretchLine, this);
     },

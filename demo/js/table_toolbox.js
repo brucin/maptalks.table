@@ -444,10 +444,10 @@ TableToolbox.prototype = {
             if(!table.options['dynamic']){
                 items = items.concat([
                     {'item': 'Add above', 'click': function() {
-                        table.addRow(rowNum, '', false);
+                        table.addRow(rowNum, {District:'', Area:'', Population: ''}, false);
                     }},
                     {'item': 'Add below', 'click': function() {
-                        table.addRow(rowNum, '', true);
+                        table.addRow(rowNum, {District:'', Area:'', Population: ''}, true);
                     }},
                     '-'
                 ]);

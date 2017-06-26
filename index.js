@@ -5,6 +5,7 @@ import './src/Table.Col';
 import './src/Table.Drag';
 import './src/Table.Header';
 import './src/Table.Row';
-import './src/Table.Stretch';
+// import './src/Table.Stretch';
+import './src/Table.Adjust';
 
 export { default as Table } from './src/Table';

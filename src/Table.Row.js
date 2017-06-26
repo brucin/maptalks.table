@@ -14,7 +14,7 @@ Table.include(/** @lends Table.prototype */{
             insertRowNum = rowNum + 1;
         }
         //构造新加入的行
-        let newDataset = [];
+        let newDataset = [], heightOffset = 0;
         if (!data || data.length === 0) { //添加空行
             newDataset.push(this._createRow(insertRowNum, data, true));
         } else if (maptalks.Util.isArrayHasData(data)) {
@@ -22,18 +22,20 @@ Table.include(/** @lends Table.prototype */{
             for (let i = 0, len = data.length; i < len; i++) {
                 item = data[i];
                 newDataset.push(this._createRow(insertRowNum, item, true));
+                heightOffset += this._rowHeights[insertRowNum];
                 insertRowNum += 1;
             }
         } else {
             let row = this._createRow(insertRowNum, data, true);
             newDataset.push(row);
+            heightOffset += this._rowHeights[insertRowNum];
         }
         //添加新的数据集
         this._addToLayer(newDataset);
         //调整之前的数据集
-        let startDataset = this._tableRows.slice(0, insertRowNum + 1);
-        let lastDataset = this._tableRows.slice(insertRowNum + 1);
-        this._adjustDatasetForRow(newDataset.length, lastDataset);
+        let startDataset = this._tableRows.slice(0, insertRowNum);
+        let lastDataset = this._tableRows.slice(insertRowNum);
+        this._adjustDatasetForRow(newDataset.length, lastDataset, heightOffset);
         this._tableRows = startDataset.concat(newDataset).concat(lastDataset);
         this._rowNum += newDataset.length;
         this.fire('addrow', this);
@@ -43,7 +45,7 @@ Table.include(/** @lends Table.prototype */{
 
     moveRow(sourceRowNum, direction) {
         this.stopEditTable();
-        this.removeStretchLine();
+        // this.removeStretchLine();
         let targetRowNum = sourceRowNum;
         if (direction === 'up') {
             if (sourceRowNum > 0) {
@@ -59,7 +61,7 @@ Table.include(/** @lends Table.prototype */{
 
 
     updateRow(rowNum, item) {
-        this.removeStretchLine();
+        // this.removeStretchLine();
         rowNum = rowNum - parseInt(this.options['startNum'] || 1);
         let tableRowNum = rowNum;
         if (this.options['header']) {
@@ -92,7 +94,7 @@ Table.include(/** @lends Table.prototype */{
    */
     removeRow(rowNum) {
         this.stopEditTable();
-        this.removeStretchLine();
+        // this.removeStretchLine();
         let removeRow = this._tableRows[rowNum];
         let firstCell = removeRow[0];
         let size = firstCell.getSize();
@@ -145,10 +147,6 @@ Table.include(/** @lends Table.prototype */{
         return this._tableRows[rowNum];
     },
 
-    getRowHeight(rowNum) {
-        return this._rowHeights[rowNum];
-    },
-
     setRowHeight(rowNum, height) {
         let oldHeight = this.getRowHeight(rowNum);
         let offset = height - oldHeight;
@@ -186,7 +184,7 @@ Table.include(/** @lends Table.prototype */{
     },
 
     _createRow(index, item, add) {
-        this.removeStretchLine();
+        // this.removeStretchLine();
         let cols = [];
         let col, dataIndex, text, cellOffset, size, cell, coordinate, symbol;
         let rowHeight = this._rowHeights[index];
@@ -195,8 +193,12 @@ Table.include(/** @lends Table.prototype */{
             col = this._columns[i];
             dataIndex = col['dataIndex'];
             text = '';
-            if (item && item[dataIndex]) {
-                text = item[dataIndex];
+            if (item) {
+                if(item[dataIndex]) {
+                    text = item[dataIndex];
+                }
+            } else {
+                item = {};
             }
             if (this.options['order'] && dataIndex === 'maptalks_order') {
                 if (!text || text === '') {
@@ -222,7 +224,6 @@ Table.include(/** @lends Table.prototype */{
                 symbol = this.getCellSymbol(index, i);
                 size = new maptalks.Size(this._colWidths[i], rowHeight);
             }
-            this.tableWidth += this._colWidths[i];
             cell = this.createCell(text, cellOffset, size, symbol);
             cell._row = index;
             cell._col = i;
@@ -236,13 +237,13 @@ Table.include(/** @lends Table.prototype */{
                 }
             }
         }
-        this.tableHeight += rowHeight;
-        if (add) {
+        if (add) {//
             this._rowHeights.splice(index, 0, rowHeight);
             if (this.options['header']) {
                 --index;
             }
             this._data.splice(index, 0, item);
+            this.tableHeight += rowHeight;
         }
         return cols;
     },
@@ -317,8 +318,9 @@ Table.include(/** @lends Table.prototype */{
    * 调整插入行之后的cell位置
    * @param {Number} insertRowLength 插入行的数量
    * @param {Array} lastDataset 插入行之后的cell数组
+   * @param {Number} heightOffset 插入行之后的高度偏移量
    */
-    _adjustDatasetForRow(insertRowLength, lastDataset) {
+    _adjustDatasetForRow(insertRowLength, lastDataset, heightOffset) {
         let row, start = 0;
         if (this.options['header']) {
             start = -1;
@@ -337,7 +339,7 @@ Table.include(/** @lends Table.prototype */{
                     this._data[row[j]._row + start]['maptalks_order'] = rowIndex;
                 }
                 row[j].fire('symbolchange', row[j]);
-                this._translateDy(row[j], this._cellHeight);
+                this._translateDy(row[j], heightOffset);
             }
         }
         return this;
