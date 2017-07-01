@@ -695,15 +695,18 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
     _showHeaderItemMenu(cell, coordinate) {
         let items = [];
         let attr, displayName, item;
+        let me = this;
         for (let i = 0, len = this._headAttributes.length; i < len; i++) {
             attr = this._headAttributes[i];
             displayName = attr['displayName'];
-            item = { 'item': displayName, 'click': this._changeHeader.apply(this, cell) };
+            item = { 'item': displayName, 'click': function(param) {
+                me._changeHeader(param, cell);
+            }};
             items.push(item);
         }
         let menuOptions = {
-            'width': 100,
-            'style': 'grey',
+            'width': 160,
+            'maxHeight' : 300,
             'items' : items
         };
         this.getMap().setMenu(menuOptions)

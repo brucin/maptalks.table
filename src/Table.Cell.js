@@ -3,10 +3,10 @@ import Table from './Table';
 Table.include(/** @lends Table.prototype */{
 
     createCell: function (content, cellOffset, size, symbol) {
-        var textSize = symbol['textSize'] || 12;
-        var textLineSpacing = symbol['textLineSpacing'] || 8;
+        let textSize = symbol['textSize'] || 12;
+        let textLineSpacing = symbol['textLineSpacing'] || 8;
         content = this._filterContent(content);
-        var options = {
+        let options = {
             'symbol': {
                 'markerLineColor': symbol['lineColor'] || '#ffffff',
                 'markerLineWidth': 1,
@@ -38,7 +38,7 @@ Table.include(/** @lends Table.prototype */{
             'boxMinWidth': size['width'],
             'boxMinHeight': size['height']
         };
-        var coordinate = this.options['position'];
+        let coordinate = this.options['position'];
         return new maptalks.TextBox(content, coordinate, options);
     },
 
