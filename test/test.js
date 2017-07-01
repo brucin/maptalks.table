@@ -335,7 +335,7 @@ describe('Table', function () {
             let table = new maptalks.Table(tableOptions);
             table.addTo(layer);
             expect(table.getRowHeight(1)).to.be.above(14);
-            expect(table.getColWidth(2)).to.be.equal(50);
+            expect(table.getColumnWidth(2)).to.be.equal(50);
             table.remove();
         });
 

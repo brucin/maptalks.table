@@ -340,14 +340,6 @@ var Table = function (_maptalks$JSONAble) {
         }
     };
 
-    Table.prototype.getRowHeight = function getRowHeight(rowNum) {
-        return this._rowHeights[rowNum];
-    };
-
-    Table.prototype.getColWidth = function getColWidth(colNum) {
-        return this._colWidths[colNum];
-    };
-
     Table.prototype.getTableWidth = function getTableWidth() {
         return this.tableWidth;
     };
@@ -382,11 +374,11 @@ var Table = function (_maptalks$JSONAble) {
                 }
             });
         }
-        var me = this;
+        var _table = this;
+        var map = this.getMap();
         this.on('click', function (event) {
-            var map = me.getMap();
             map.options['doubleClickZoom'] = false;
-            me.prepareAdjust();
+            _table.prepareAdjust();
         });
     };
 
@@ -2080,8 +2072,14 @@ Table.include( /** @lends Table.prototype */{
         this.fire('removerow', this);
         this.fire('orderchanged', this);
     },
+    getRowsNum: function getRowsNum() {
+        return this._rowNum;
+    },
     getRow: function getRow(rowNum) {
         return this._tableRows[rowNum];
+    },
+    getRowHeight: function getRowHeight(rowNum) {
+        return this._rowHeights[rowNum];
     },
     setRowHeight: function setRowHeight(rowNum, height) {
         var oldHeight = this.getRowHeight(rowNum);
@@ -2322,7 +2320,9 @@ Table.include( /** @lends Table.prototype */{
 
 var TABLE_ADJUST_LAYER_PREFIX = maptalks.INTERNAL_LAYER_PREFIX + '_table_adjust_layer_';
 
-var TABLE_ADJUST_LINE_PREFIX = '__table_adjust_line_id_';
+var TOP_ADJUST_LINE_PREFIX = '__table_top_adjust_line_id_';
+
+var LEFT_ADJUST_LINE_PREFIX = '__table_left_adjust_line_id_';
 
 Table.include( /** @lends Table.prototype */{
 
@@ -2331,11 +2331,15 @@ Table.include( /** @lends Table.prototype */{
     */
     prepareAdjust: function prepareAdjust() {
         if (!this.getMap()) return;
+        if (!this.options['header']) return;
+        if (this._adjustLaye && !maptalks.Util.isArrayHasData(this._adjustLayer.getGeometries())) return;
         this._prepareEditLayer();
         // this.config('draggable', false);
     },
     _prepareEditLayer: function _prepareEditLayer() {
         var map = this.getMap();
+        var coordinate = this.getCoordinates(),
+            startViewPoint = map.coordinateToViewPoint(coordinate);
         var uid = maptalks.Util.UID();
         var layerId = TABLE_ADJUST_LAYER_PREFIX + uid;
         this._adjustLayer = map.getLayer(layerId);
@@ -2343,32 +2347,11 @@ Table.include( /** @lends Table.prototype */{
             this._adjustLayer = new maptalks.VectorLayer(layerId);
             map.addLayer(this._adjustLayer);
         }
-        this._createTopHandle();
-    },
-    _createTopHandle: function _createTopHandle() {
-        var map = this.getMap();
-        var coordinate = this.getCoordinates(),
-            startViewPoint = map.coordinateToViewPoint(coordinate);
-        // let width = this.getTableWidth(), height = 16;
-        // let startPosition = map.viewPointToCoordinate(startPoint.add(new maptalks.Point(0, -24)));
-        // let topRectangle = new maptalks.Marker(startPosition, {
-        //     'symbol'    : {
-        //         'markerType' : 'square',
-        //         'markerLineColor': '#ffffff',
-        //         'markerLineDasharray' : [5, 5, 2, 5],
-        //         'markerFill': '#4e98dd',
-        //         'markerFillOpacity' : 0.1,
-        //         'markerWidth': width,
-        //         'markerHeight': height,
-        //         'markerDx' : width / 2,
-        //         'markerDy' : height / 2
-        //     }
-        // });
-        // let startViewPoint = map.coordinateToViewPoint(startPosition);
-        var geometries = this._createTopHandleLine(startViewPoint);
-        // geometries.push(topRectangle);
-        this._adjustLayer.addGeometry(geometries);
-        this._bindTableEvent(geometries);
+        this._topLines = this._createTopHandleLine(startViewPoint);
+        this._adjustLayer.addGeometry(this._topLines);
+        this._leftLines = this._createLeftHandleLine(startViewPoint);
+        this._adjustLayer.addGeometry(this._leftLines);
+        this._bindTableEvent();
     },
     _createTopHandleLine: function _createTopHandleLine(startViewPoint) {
         var _this = this;
@@ -2378,19 +2361,19 @@ Table.include( /** @lends Table.prototype */{
         var width = 0;
 
         var _loop = function _loop(i) {
-            var monitorPoint = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width + 10, 0)));
+            var monitorCoordinate = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width + 10, 0)));
             width += _this.getColumnWidth(i);
             var start = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width, 0)));
             var end = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width, height)));
             var handleLine = new maptalks.LineString([start, end], {
-                'id': TABLE_ADJUST_LINE_PREFIX + i,
+                'id': TOP_ADJUST_LINE_PREFIX + i,
                 'draggable': true,
                 'dragShadow': false,
                 'dragOnAxis': 'x',
                 'cursor': 'ew-resize',
                 'symbol': {
                     'lineColor': '#ffffff',
-                    'lineWidth': 1
+                    'lineWidth': 1.5
                 }
             });
             var _table = _this;
@@ -2399,25 +2382,26 @@ Table.include( /** @lends Table.prototype */{
                 if (!lineId) return;
                 var columnNum = parseInt(lineId.substring(lineId.lastIndexOf('_') + 1));
                 var dragOffset = eventParam['dragOffset'];
-                var coordinate = new maptalks.Coordinate(eventParam['coordinate'].x, 0);
-                var monitorPosition = map.coordinateToViewPoint(monitorPoint);
-                monitorPoint.y = 0;
-                if (coordinate.x < monitorPoint.x) {
+                var nowCoordinate = new maptalks.Coordinate(eventParam['coordinate'].x, 0);
+                var monitorPosition = map.coordinateToViewPoint(monitorCoordinate);
+                monitorCoordinate.y = 0;
+                if (nowCoordinate.x < monitorCoordinate.x) {
                     //out of scope
-                    var offset = monitorPoint.substract(coordinate);
+                    var offset = monitorCoordinate.substract(nowCoordinate);
                     if (handleLine.options['dragShadow']) {
                         handleLine.draggable._shadow.translate(offset);
                     } else {
                         handleLine.translate(offset);
                     }
-                    // handleLine.draggable.disable();
                     handleLine.draggable._endDrag(eventParam);
                     var columnWidth = _table.getColumnWidth(columnNum);
-                    var startPoint = map.viewPointToCoordinate(monitorPosition.add(new maptalks.Point(columnWidth - 10, 0)));
-                    startPoint.y = 0;
-                    dragOffset = monitorPoint.substract(startPoint);
+                    var startCoordinate = map.viewPointToCoordinate(monitorPosition.add(new maptalks.Point(columnWidth - 10, 0)));
+                    startCoordinate.y = 0;
+                    dragOffset = monitorCoordinate.substract(startCoordinate);
                 }
                 _table._resizeCol(columnNum, dragOffset);
+                //translate adjust line
+                _table._translateTopHandleLine(columnNum, dragOffset);
             });
             handleLines.push(handleLine);
         };
@@ -2427,9 +2411,79 @@ Table.include( /** @lends Table.prototype */{
         }
         return handleLines;
     },
-    _bindTableEvent: function _bindTableEvent(geometries) {
+    _translateTopHandleLine: function _translateTopHandleLine(columnNum, dragOffset) {
+        for (var i = columnNum + 1; i < this._topLines.length; i++) {
+            this._topLines[i].translate(dragOffset);
+        }
+    },
+    _createLeftHandleLine: function _createLeftHandleLine(startViewPoint) {
+        var _this2 = this;
+
+        var width = this.getTableWidth();
+        var handleLines = [];
+        var height = 0;
+
+        var _loop2 = function _loop2(i) {
+            var monitorCoordinate = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(0, height + 10)));
+            height += _this2.getRowHeight(i);
+            var start = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(0, height)));
+            var end = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width, height)));
+            var handleLine = new maptalks.LineString([start, end], {
+                'id': LEFT_ADJUST_LINE_PREFIX + i,
+                'draggable': true,
+                'dragShadow': false,
+                'dragOnAxis': 'y',
+                'cursor': 'ns-resize',
+                'symbol': {
+                    'lineColor': '#ffffff',
+                    'lineWidth': 1.5
+                }
+            });
+            var _table = _this2;
+            handleLine.on('dragging', function (eventParam) {
+                var lineId = handleLine.getId();
+                if (!lineId) return;
+                var rowNum = parseInt(lineId.substring(lineId.lastIndexOf('_') + 1));
+                var dragOffset = eventParam['dragOffset'];
+                var nowCoordinate = new maptalks.Coordinate(0, eventParam['coordinate'].y);
+                var monitorPosition = map.coordinateToViewPoint(monitorCoordinate);
+                monitorCoordinate.x = 0;
+                if (nowCoordinate.y > monitorCoordinate.y) {
+                    //out of scope
+                    var offset = monitorCoordinate.substract(nowCoordinate);
+                    if (handleLine.options['dragShadow']) {
+                        handleLine.draggable._shadow.translate(offset);
+                    } else {
+                        handleLine.translate(offset);
+                    }
+                    handleLine.draggable._endDrag(eventParam);
+                    var rowHeight = _table.getRowHeight(rowNum);
+                    var startCoordinate = map.viewPointToCoordinate(monitorPosition.add(new maptalks.Point(0, rowHeight - 10)));
+                    startCoordinate.x = 0;
+                    dragOffset = monitorCoordinate.substract(startCoordinate);
+                }
+                _table._resizeRow(rowNum, dragOffset);
+                //translate adjust line
+                _table._translateLeftHandleLine(rowNum, dragOffset);
+            });
+            handleLines.push(handleLine);
+        };
+
+        for (var i = 0; i < this.getRowsNum(); i++) {
+            _loop2(i);
+        }
+        return handleLines;
+    },
+    _translateLeftHandleLine: function _translateLeftHandleLine(rowNum, dragOffset) {
+        console.log('dragOffset:');
+        console.log(dragOffset);
+        for (var i = rowNum + 1; i < this._leftLines.length; i++) {
+            this._leftLines[i].translate(dragOffset);
+        }
+    },
+    _bindTableEvent: function _bindTableEvent() {
         var _table = this;
-        this.on('hide remove dragstart', function () {
+        this.on('hide remove dragstart movestart', function () {
             _table._remove();
         });
         this.on('mouseout', function () {
@@ -2442,21 +2496,21 @@ Table.include( /** @lends Table.prototype */{
     _remove: function _remove() {
         this._adjustLayer.clear();
     },
-    _resizeRow: function _resizeRow(dragOffset) {
+    _resizeRow: function _resizeRow(rowNum, dragOffset) {
         var pixel = this.getMap().coordinateToPoint(dragOffset);
         var height = pixel['y'];
         var row,
             cell,
             symbol,
-            newHeight = this._rowHeights[this._stretchRowNum] + height;
+            newHeight = this._rowHeights[rowNum] + height;
         this.tableHeight += height;
-        this._rowHeights[this._stretchRowNum] = newHeight;
-        for (var i = this._stretchRowNum; i < this._rowNum; i++) {
+        this._rowHeights[rowNum] = newHeight;
+        for (var i = rowNum; i < this._rowNum; i++) {
             row = this._tableRows[i];
             for (var j = 0; j < this._colNum; j++) {
                 cell = row[j];
                 symbol = cell.getSymbol();
-                if (i === this._stretchRowNum) {
+                if (i === rowNum) {
                     cell.options['boxMinHeight'] = newHeight;
                     if (cell.options['boxMinHeight'] < symbol['markerHeight']) {
                         symbol['markerHeight'] = cell.options['boxMinHeight'];

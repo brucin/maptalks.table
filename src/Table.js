@@ -265,14 +265,6 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         }
     }
 
-    getRowHeight(rowNum) {
-        return this._rowHeights[rowNum];
-    }
-
-    getColWidth(colNum) {
-        return this._colWidths[colNum];
-    }
-
     getTableWidth() {
         return this.tableWidth;
     }
@@ -303,11 +295,11 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
                 }
             });
         }
-        let me = this;
+        let _table = this;
+        const map = this.getMap();
         this.on('click', function (event) {
-            let map = me.getMap();
             map.options['doubleClickZoom'] = false;
-            me.prepareAdjust();
+            _table.prepareAdjust();
         });
     }
 

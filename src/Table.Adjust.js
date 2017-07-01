@@ -2,7 +2,9 @@ import Table from './Table';
 
 const TABLE_ADJUST_LAYER_PREFIX = maptalks.INTERNAL_LAYER_PREFIX + '_table_adjust_layer_';
 
-const TABLE_ADJUST_LINE_PREFIX = '__table_adjust_line_id_';
+const TOP_ADJUST_LINE_PREFIX = '__table_top_adjust_line_id_';
+
+const LEFT_ADJUST_LINE_PREFIX = '__table_left_adjust_line_id_';
 
 Table.include(/** @lends Table.prototype */{
 
@@ -11,12 +13,15 @@ Table.include(/** @lends Table.prototype */{
     */
     prepareAdjust() {
         if(!this.getMap()) return;
+        if(!this.options['header']) return;
+        if(this._adjustLaye && !maptalks.Util.isArrayHasData(this._adjustLayer.getGeometries())) return;
         this._prepareEditLayer();
         // this.config('draggable', false);
     },
 
     _prepareEditLayer() {
         const map = this.getMap();
+        const coordinate = this.getCoordinates(), startViewPoint = map.coordinateToViewPoint(coordinate);
         const uid = maptalks.Util.UID();
         let layerId = TABLE_ADJUST_LAYER_PREFIX + uid;
         this._adjustLayer = map.getLayer(layerId);
@@ -24,32 +29,11 @@ Table.include(/** @lends Table.prototype */{
             this._adjustLayer = new maptalks.VectorLayer(layerId);
             map.addLayer(this._adjustLayer);
         }
-        this._createTopHandle();
-    },
-
-    _createTopHandle() {
-        const map = this.getMap();
-        const coordinate = this.getCoordinates(), startViewPoint = map.coordinateToViewPoint(coordinate);
-        // let width = this.getTableWidth(), height = 16;
-        // let startPosition = map.viewPointToCoordinate(startPoint.add(new maptalks.Point(0, -24)));
-        // let topRectangle = new maptalks.Marker(startPosition, {
-        //     'symbol'    : {
-        //         'markerType' : 'square',
-        //         'markerLineColor': '#ffffff',
-        //         'markerLineDasharray' : [5, 5, 2, 5],
-        //         'markerFill': '#4e98dd',
-        //         'markerFillOpacity' : 0.1,
-        //         'markerWidth': width,
-        //         'markerHeight': height,
-        //         'markerDx' : width / 2,
-        //         'markerDy' : height / 2
-        //     }
-        // });
-        // let startViewPoint = map.coordinateToViewPoint(startPosition);
-        let geometries = this._createTopHandleLine(startViewPoint);
-        // geometries.push(topRectangle);
-        this._adjustLayer.addGeometry(geometries);
-        this._bindTableEvent(geometries);
+        this._topLines = this._createTopHandleLine(startViewPoint);
+        this._adjustLayer.addGeometry(this._topLines);
+        this._leftLines = this._createLeftHandleLine(startViewPoint);
+        this._adjustLayer.addGeometry(this._leftLines);
+        this._bindTableEvent();
     },
 
     _createTopHandleLine(startViewPoint) {
@@ -57,20 +41,20 @@ Table.include(/** @lends Table.prototype */{
         let handleLines = [];
         let width = 0;
         for (let i = 0; i < this.getColumnNum(); i++) {
-            let monitorPoint = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width + 10, 0)));
+            let monitorCoordinate = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width + 10, 0)));
             width += this.getColumnWidth(i);
             let start = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width, 0)));
             let end = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width, height)));
             let handleLine = new maptalks.LineString([start, end], 
             {
-                'id' : TABLE_ADJUST_LINE_PREFIX + i,
+                'id' : TOP_ADJUST_LINE_PREFIX + i,
                 'draggable' : true,
                 'dragShadow' : false,
                 'dragOnAxis' : 'x',
                 'cursor' : 'ew-resize',
                 'symbol' : {
                     'lineColor' : '#ffffff',
-                    'lineWidth' : 1
+                    'lineWidth' : 1.5
                 }
             });
             let _table = this;
@@ -79,11 +63,11 @@ Table.include(/** @lends Table.prototype */{
                 if (!lineId) return;
                 let columnNum = parseInt(lineId.substring(lineId.lastIndexOf('_') + 1));
                 let dragOffset = eventParam['dragOffset'];
-                let coordinate = new maptalks.Coordinate(eventParam['coordinate'].x, 0);
-                let monitorPosition = map.coordinateToViewPoint(monitorPoint);
-                monitorPoint.y = 0;
-                if(coordinate.x < monitorPoint.x) {//out of scope
-                    let offset = monitorPoint.substract(coordinate);
+                let nowCoordinate = new maptalks.Coordinate(eventParam['coordinate'].x, 0);
+                let monitorPosition = map.coordinateToViewPoint(monitorCoordinate);
+                monitorCoordinate.y = 0;
+                if(nowCoordinate.x < monitorCoordinate.x) {//out of scope
+                    let offset = monitorCoordinate.substract(nowCoordinate);
                     if (handleLine.options['dragShadow']) {
                         handleLine.draggable._shadow.translate(offset);
                     } else {
@@ -91,20 +75,88 @@ Table.include(/** @lends Table.prototype */{
                     }
                     handleLine.draggable._endDrag(eventParam);
                     let columnWidth = _table.getColumnWidth(columnNum);
-                    let startPoint = map.viewPointToCoordinate(monitorPosition.add(new maptalks.Point(columnWidth - 10, 0)));
-                    startPoint.y = 0;
-                    dragOffset = monitorPoint.substract(startPoint);
+                    let startCoordinate = map.viewPointToCoordinate(monitorPosition.add(new maptalks.Point(columnWidth - 10, 0)));
+                    startCoordinate.y = 0;
+                    dragOffset = monitorCoordinate.substract(startCoordinate);
                 }
                 _table._resizeCol(columnNum, dragOffset);
+                //translate adjust line
+                _table._translateTopHandleLine(columnNum, dragOffset);
             });
             handleLines.push(handleLine);
         }
         return handleLines;
     },
 
-    _bindTableEvent(geometries) {
+    _translateTopHandleLine(columnNum, dragOffset) {
+        for (var i = columnNum + 1; i < this._topLines.length; i++) {
+            this._topLines[i].translate(dragOffset);
+        }
+    },
+
+    _createLeftHandleLine(startViewPoint) {
+        let width = this.getTableWidth();
+        let handleLines = [];
+        let height = 0;
+        for (let i = 0; i < this.getRowsNum(); i++) {
+            let monitorCoordinate = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(0, height + 10)));
+            height += this.getRowHeight(i);
+            let start = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(0, height)));
+            let end = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width, height)));
+            let handleLine = new maptalks.LineString([start, end], 
+            {
+                'id' : LEFT_ADJUST_LINE_PREFIX + i,
+                'draggable' : true,
+                'dragShadow' : false,
+                'dragOnAxis' : 'y',
+                'cursor' : 'ns-resize',
+                'symbol' : {
+                    'lineColor' : '#ffffff',
+                    'lineWidth' : 1.5
+                }
+            });
+            let _table = this;
+            handleLine.on('dragging', function(eventParam) {
+                let lineId = handleLine.getId();
+                if (!lineId) return;
+                let rowNum = parseInt(lineId.substring(lineId.lastIndexOf('_') + 1));
+                let dragOffset = eventParam['dragOffset'];
+                let nowCoordinate = new maptalks.Coordinate(0, eventParam['coordinate'].y);
+                let monitorPosition = map.coordinateToViewPoint(monitorCoordinate);
+                monitorCoordinate.x = 0;
+                if(nowCoordinate.y > monitorCoordinate.y) {//out of scope
+                    let offset = monitorCoordinate.substract(nowCoordinate);
+                    if (handleLine.options['dragShadow']) {
+                        handleLine.draggable._shadow.translate(offset);
+                    } else {
+                        handleLine.translate(offset);
+                    }
+                    handleLine.draggable._endDrag(eventParam);
+                    let rowHeight = _table.getRowHeight(rowNum);
+                    let startCoordinate = map.viewPointToCoordinate(monitorPosition.add(new maptalks.Point(0, rowHeight - 10)));
+                    startCoordinate.x = 0;
+                    dragOffset = monitorCoordinate.substract(startCoordinate);
+                }
+                _table._resizeRow(rowNum, dragOffset);
+                //translate adjust line
+                _table._translateLeftHandleLine(rowNum, dragOffset);
+            });
+            handleLines.push(handleLine);
+        }
+        return handleLines;
+    },
+
+    _translateLeftHandleLine(rowNum, dragOffset) {
+        console.log('dragOffset:');
+        console.log(dragOffset);
+        for (var i = rowNum + 1; i < this._leftLines.length; i++) {
+            this._leftLines[i].translate(dragOffset);
+        }
+    },
+
+    _bindTableEvent() {
         let _table = this;
-        this.on('hide remove dragstart', function() {
+        this.on('hide remove dragstart movestart', function() {
             _table._remove();
         });
         this.on('mouseout', function () { 
@@ -119,19 +171,19 @@ Table.include(/** @lends Table.prototype */{
         this._adjustLayer.clear();
     },
 
-    _resizeRow(dragOffset) {
+    _resizeRow(rowNum, dragOffset) {
         var pixel = this.getMap().coordinateToPoint(dragOffset);
         var height = pixel['y'];
         var row, cell, symbol,
-            newHeight = this._rowHeights[this._stretchRowNum] + height;
+            newHeight = this._rowHeights[rowNum] + height;
         this.tableHeight += height;
-        this._rowHeights[this._stretchRowNum] = newHeight;
-        for (var i = this._stretchRowNum; i < this._rowNum; i++) {
+        this._rowHeights[rowNum] = newHeight;
+        for (var i = rowNum; i < this._rowNum; i++) {
             row = this._tableRows[i];
             for (var j = 0; j < this._colNum; j++) {
                 cell = row[j];
                 symbol = cell.getSymbol();
-                if (i === this._stretchRowNum) {
+                if (i === rowNum) {
                     cell.options['boxMinHeight'] = newHeight;
                     if (cell.options['boxMinHeight'] < symbol['markerHeight']) {
                         symbol['markerHeight'] = cell.options['boxMinHeight'];

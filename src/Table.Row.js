@@ -143,8 +143,16 @@ Table.include(/** @lends Table.prototype */{
         this.fire('orderchanged', this);
     },
 
+    getRowsNum() {
+        return this._rowNum;
+    },
+
     getRow(rowNum) {
         return this._tableRows[rowNum];
+    },
+
+    getRowHeight(rowNum) {
+        return this._rowHeights[rowNum];
     },
 
     setRowHeight(rowNum, height) {
