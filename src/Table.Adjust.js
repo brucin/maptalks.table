@@ -30,13 +30,12 @@ Table.include(/** @lends Table.prototype */{
             map.addLayer(this._adjustLayer);
         }
         this._topLines = this._createTopHandleLine(startViewPoint);
-        this._adjustLayer.addGeometry(this._topLines);
         this._leftLines = this._createLeftHandleLine(startViewPoint);
-        this._adjustLayer.addGeometry(this._leftLines);
         this._bindTableEvent();
     },
 
     _createTopHandleLine(startViewPoint) {
+        const map = this.getMap();
         let height = this._rowHeights[0];//header height
         let handleLines = [];
         let width = 0;
@@ -83,8 +82,15 @@ Table.include(/** @lends Table.prototype */{
                 //translate adjust line
                 _table._translateTopHandleLine(columnNum, dragOffset);
             });
+            handleLine.on('dragstart', function(eventParam) {
+                _table._removeLeftLines();
+            });
+            handleLine.on('dragend', function(eventParam){
+                _table._createLeftHandleLine(startViewPoint);
+            });
             handleLines.push(handleLine);
         }
+        this._adjustLayer.addGeometry(handleLines);
         return handleLines;
     },
 
@@ -95,6 +101,7 @@ Table.include(/** @lends Table.prototype */{
     },
 
     _createLeftHandleLine(startViewPoint) {
+        const map = this.getMap();
         let width = this.getTableWidth();
         let handleLines = [];
         let height = 0;
@@ -141,20 +148,26 @@ Table.include(/** @lends Table.prototype */{
                 //translate adjust line
                 _table._translateLeftHandleLine(rowNum, dragOffset);
             });
+            handleLine.on('dragstart', function(eventParam) {
+                _table._removeTopLines();
+            });
+            handleLine.on('dragend', function(eventParam){
+                _table._createTopHandleLine(startViewPoint);
+            });
             handleLines.push(handleLine);
         }
+        this._adjustLayer.addGeometry(handleLines);
         return handleLines;
     },
 
     _translateLeftHandleLine(rowNum, dragOffset) {
-        console.log('dragOffset:');
-        console.log(dragOffset);
         for (var i = rowNum + 1; i < this._leftLines.length; i++) {
             this._leftLines[i].translate(dragOffset);
         }
     },
 
     _bindTableEvent() {
+        const map = this.getMap();
         let _table = this;
         this.on('hide remove dragstart movestart', function() {
             _table._remove();
@@ -169,6 +182,22 @@ Table.include(/** @lends Table.prototype */{
 
     _remove() {
         this._adjustLayer.clear();
+    },
+
+    _removeTopLines() {
+        if(this._topLines) {
+            for (let len = this._topLines.length, i = len - 1; i >= 0; i--) {
+                this._topLines[i].remove();
+            }
+        }
+    },
+
+    _removeLeftLines() {
+        if(this._leftLines) {
+            for (let len = this._leftLines.length, i = len - 1; i >= 0; i--) {
+                this._leftLines[i].remove();
+            }
+        }
     },
 
     _resizeRow(rowNum, dragOffset) {

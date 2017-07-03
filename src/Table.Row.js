@@ -94,7 +94,6 @@ Table.include(/** @lends Table.prototype */{
    */
     removeRow(rowNum) {
         this.stopEditTable();
-        // this.removeStretchLine();
         let removeRow = this._tableRows[rowNum];
         let firstCell = removeRow[0];
         let size = firstCell.getSize();
@@ -105,14 +104,14 @@ Table.include(/** @lends Table.prototype */{
             for (let j = 0, rowLength = row.length; j < rowLength; j++) {
                 cell = row[j];
                 if (i > rowNum) {
-                    cell._row -= 1;
                     if (this.options['order'] && this._columns[j]['dataIndex'] === 'maptalks_order') {
                         let startNum = this.options['startNum'] || 1;
                         if (startNum > 1) {
-                            cell.setContent(cell._row + startNum);
+                            cell.setContent(cell._row + startNum - 1);
                         } else {
-                            cell.setContent(cell._row);
+                            cell.setContent(cell._row - 1);
                         }
+                        cell._row -= 1;
                     }
                     this._translateDy(cell, -size['height'] + 1);
                 } else {
@@ -132,7 +131,7 @@ Table.include(/** @lends Table.prototype */{
             this._data.splice(rowNum, 1);
             adjustStartRow = rowNum;
         }
-        this.removeNumLabelByRowNum(rowNum);
+        // this.removeNumLabelByRowNum(rowNum);
         //调整data中删除行之后的数据
         for (let i = adjustStartRow; i < this._data.length; i++) {
             this._data[i]['maptalks_order'] -= 1;
@@ -285,8 +284,12 @@ Table.include(/** @lends Table.prototype */{
             sourceRowDy = sourceRowDy - targetRowHeight;
             targetRowDy = targetRowDy + sourceRowHeight;
         }
+        //调整table相关内存数组
+        let sourceItem = this._data[sourceRowNum + start];
+        this._data[sourceRowNum + start] = this._data[targetRowNum + start];
+        this._data[targetRowNum + start] = sourceItem;
 
-      //调整行号
+        //调整行号
         for (let i = 0, len = sourceRow.length; i < len; i++) {
             let sourceSymbol = sourceRow[i].getSymbol();
             sourceRow[i]._row = targetRowNum;
@@ -295,7 +298,7 @@ Table.include(/** @lends Table.prototype */{
             sourceRow[i].setSymbol(sourceSymbol);
             if (this.options['order'] && this._columns[i]['dataIndex'] === 'maptalks_order') {
                 sourceRow[i].setContent(targetRowNum);
-                this._data[sourceRowNum + start]['maptalks_order'] = targetRowNum;
+                this._data[targetRowNum + start]['maptalks_order'] = targetRowNum;
                 sourceRow[i].fire('positionchanged', { target:sourceRow[i] });
             }
         }
@@ -307,16 +310,12 @@ Table.include(/** @lends Table.prototype */{
             targetRow[i].setSymbol(targetSymbol);
             if (this.options['order'] && this._columns[i]['dataIndex'] === 'maptalks_order') {
                 targetRow[i].setContent(sourceRowNum);
-                this._data[targetRowNum + start]['maptalks_order'] = sourceRowNum;
+                this._data[sourceRowNum + start]['maptalks_order'] = sourceRowNum;
                 targetRow[i].fire('positionchanged', { target:targetRow[i] });
             }
         }
         this._tableRows[targetRowNum] = sourceRow;
         this._tableRows[sourceRowNum] = targetRow;
-        //调整table相关内存数组
-        let sourceItem = this._data[sourceRowNum + start];
-        this._data[sourceRowNum + start] = this._data[targetRowNum + start];
-        this._data[targetRowNum + start] = sourceItem;
 
         this._rowHeights[sourceRowNum] = this._rowHeights[targetRowNum];
         this._rowHeights[targetRowNum] = sourceRowHeight;

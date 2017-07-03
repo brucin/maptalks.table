@@ -151,12 +151,16 @@ Table.include(/** @lends Table.prototype */{
         return saveSymbol;
     },
 
-    removeNumLabelByRowNum: function (rowNum) {
-        for (var i = this._geometryNumLabels.length - 1;  i >= rowNum - 1; i--) {
-            this._geometryNumLabels[i].remove();
-            this._geometryNumLabels.splice(i, 1);
-        }
-    },
+    // removeNumLabelByRowNum: function (rowNum) {
+    //     for (var i = 0; i < this._geometryNumLabels.length; i++) {
+    //         let label = this._geometryNumLabels[i];
+    //         if(label.getContent() === rowNum+'') {
+    //             label.remove();
+    //             this._geometryNumLabels.splice(i, 1);
+    //             break;
+    //         }
+    //     }
+    // },
 
     _addEditEventToCell: function (cell) {
         cell.startEditText();
@@ -189,9 +193,7 @@ Table.include(/** @lends Table.prototype */{
     _addNumberLabelToGeometry: function (coordinate, cell) {
         //设置label属性
         let cellSymbol = cell.getSymbol();
-        let numberLabelId = this.getId() + '_' + this.getRowNum(cell);
         let options = {
-            'id': numberLabelId,
             'symbol': this._convertCellSymbolToNumberSymbol(cellSymbol),
             'draggable': false,
             'boxAutoSize': false,
@@ -200,16 +202,12 @@ Table.include(/** @lends Table.prototype */{
         };
         //创建label
         let num = cell.getContent();
-        let numberLabel = this.getLayer().getGeometryById(numberLabelId);
-        if (!numberLabel) {
-            numberLabel = new maptalks.Label(num, coordinate, options);
-            this.getLayer().addGeometry(numberLabel);
-        }
+        let numberLabel = new maptalks.Label(num, coordinate, options);
+        this.getLayer().addGeometry(numberLabel);
         this._geometryNumLabels.push(numberLabel);
         let me = this;
         cell.on('remove', function () {
             me._removeNumLabel(numberLabel);
-            numberLabel.remove();
         }, this);
         cell.on('hide', function () {
             numberLabel.hide();
@@ -229,12 +227,10 @@ Table.include(/** @lends Table.prototype */{
         }, this);
         cell.on('symbolchange', () => {
             let symbol = this._convertCellSymbolToNumberSymbol(cell.getSymbol());
-            this._changeNumLabelSymbol(numberLabel, symbol);
             numberLabel.setSymbol(symbol);
         }, this);
-        cell.on('contentchange positionchanged', () => {
+        cell.on('positionchanged contentchange', () => {
             let number = cell.getContent();
-            this._changeNumLabelContent(numberLabel, number);
             numberLabel.setContent(number);
         }, this);
     },
@@ -253,26 +249,9 @@ Table.include(/** @lends Table.prototype */{
 
     _removeNumLabel: function (label) {
         for (var i = 0; i < this._geometryNumLabels.length; i++) {
-            if (label ===  this._geometryNumLabels[i]) {
+            if (label.getContent() ===  this._geometryNumLabels[i].getContent()) {
+                this._geometryNumLabels[i].remove();
                 this._geometryNumLabels.splice(i, 1);
-                break;
-            }
-        }
-    },
-
-    _changeNumLabelSymbol: function (label, symbol) {
-        for (var i = 0; i < this._geometryNumLabels.length; i++) {
-            if (label ===  this._geometryNumLabels[i]) {
-                this._geometryNumLabels[i].setSymbol(symbol);
-                break;
-            }
-        }
-    },
-
-    _changeNumLabelContent: function (label, content) {
-        for (var i = 0; i < this._geometryNumLabels.length; i++) {
-            if (label ===  this._geometryNumLabels[i]) {
-                this._geometryNumLabels[i].setContent(content);
                 break;
             }
         }

@@ -296,9 +296,7 @@ describe('Table', function () {
         it('change geometry position', function () {
             let table = new maptalks.Table(dynamicTableOptions);
             table.addTo(dynamicLayer);
-            let numberLabelId = table.getId() + '_1';
-            let numberLabel = dynamicLayer.getGeometryById(numberLabelId);
-            let geometries = dynamicLayer.getGeometries();
+            let numberLabel = table._geometryNumLabels[0];
             expect(numberLabel.getCenter()).to.be.closeTo(center);
             let newPosition = new maptalks.Coordinate(119.846825, 30.046534);
             marker.setCoordinates(newPosition);
@@ -306,7 +304,7 @@ describe('Table', function () {
             let prop = marker.getProperties();
             prop['coordinate'] = newPosition;
             table.refreshData([prop], 'id');
-            expect(dynamicLayer.getGeometryById(numberLabelId).getCenter()).to.be.closeTo(marker.getCenter());
+            expect(numberLabel.getCenter()).to.be.closeTo(marker.getCenter());
             table.remove();
         });
 
@@ -314,8 +312,7 @@ describe('Table', function () {
             let table = new maptalks.Table(dynamicTableOptions);
             dynamicTableOptions['startNum'] = 2;
             table.addTo(dynamicLayer);
-            let numberLabelId = table.getId() + '_1';
-            let numberLabel = dynamicLayer.getGeometryById(numberLabelId);
+            let numberLabel = table._geometryNumLabels[0];
             expect(numberLabel.getCenter()).to.be.closeTo(center);
             let newPosition = new maptalks.Coordinate(119.846825, 30.046534);
             marker.setCoordinates(newPosition);
@@ -323,7 +320,7 @@ describe('Table', function () {
             let prop = marker.getProperties();
             prop['coordinate'] = newPosition;
             table.refreshData([prop], 'id');
-            expect(dynamicLayer.getGeometryById(numberLabelId).getCenter()).to.be.closeTo(marker.getCenter());
+            expect(numberLabel.getCenter()).to.be.closeTo(marker.getCenter());
             table.remove();
             dynamicTableOptions['startNum'] = 1;
         });
