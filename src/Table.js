@@ -367,28 +367,13 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         for (let i = 0, len = this._columns.length; i < len; i++) {
             let col = this._columns[i];
             let header = col['header'];
-            let maxWidth = col['maxWidth'] || this._cellWidth;
             let style =  this.getCellSymbol(0, i);
             let font = maptalks.StringUtil.getFont(style);
             let size = maptalks.StringUtil.stringLength(header, font);
-            if (size['width'] >= maxWidth) {
-                maxWidth = size['width'];
-            }
-            this._colWidths[i] = maxWidth;
+            this._colWidths[i] = size['width'];
             if (this._rowHeights[0] < size['height']) {
                 this._rowHeights[0] = size['height'];
             }
-            // this._rowHeights[0] = size['height'];
-            // style['textWrapWidth'] = maxWidth;
-            // let row = maptalks.StringUtil.splitTextToRow(header, style);
-            // let rowSize = row['size'];
-            // if (this._colWidths[i] < rowSize['width']) {
-            //     if (rowSize['width'] <= maxWidth) {
-            //         this._colWidths[i] = rowSize['width'];
-            //     } else {
-            //         this._colWidths[i] = maxWidth;
-            //     }
-            // }
         }
     }
 

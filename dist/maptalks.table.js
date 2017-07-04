@@ -442,28 +442,13 @@ var Table = function (_maptalks$JSONAble) {
         for (var i = 0, len = this._columns.length; i < len; i++) {
             var col = this._columns[i];
             var header = col['header'];
-            var maxWidth = col['maxWidth'] || this._cellWidth;
             var style = this.getCellSymbol(0, i);
             var font = maptalks.StringUtil.getFont(style);
             var size = maptalks.StringUtil.stringLength(header, font);
-            if (size['width'] >= maxWidth) {
-                maxWidth = size['width'];
-            }
-            this._colWidths[i] = maxWidth;
+            this._colWidths[i] = size['width'];
             if (this._rowHeights[0] < size['height']) {
                 this._rowHeights[0] = size['height'];
             }
-            // this._rowHeights[0] = size['height'];
-            // style['textWrapWidth'] = maxWidth;
-            // let row = maptalks.StringUtil.splitTextToRow(header, style);
-            // let rowSize = row['size'];
-            // if (this._colWidths[i] < rowSize['width']) {
-            //     if (rowSize['width'] <= maxWidth) {
-            //         this._colWidths[i] = rowSize['width'];
-            //     } else {
-            //         this._colWidths[i] = maxWidth;
-            //     }
-            // }
         }
     };
 
