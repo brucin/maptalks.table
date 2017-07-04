@@ -197,13 +197,22 @@ var Table = function (_maptalks$JSONAble) {
         var orderTitle = _this.options['orderTitle'];
         if (!orderTitle) orderTitle = 'No.';
         if (_this.options['order']) {
-            var startNum = parseInt(_this.options['startNum']);
-            var orderCol = { header: orderTitle, dataIndex: 'maptalks_order', type: 'number' };
-            _this.options['columns'].unshift(orderCol);
-
-            var dataArray = _this.options['data'];
-            for (var i = 0, len = dataArray.length; i < len; i++) {
-                dataArray[i]['maptalks_order'] = i + startNum;
+            var addColumn = true;
+            var cols = _this.options['columns'];
+            for (var i = 0; i < cols.length; i++) {
+                if (cols[i].dataIndex === 'maptalks_order') {
+                    addColumn = false;
+                    break;
+                }
+            }
+            if (addColumn) {
+                var startNum = parseInt(_this.options['startNum']);
+                var orderCol = { header: orderTitle, dataIndex: 'maptalks_order', type: 'number' };
+                _this.options['columns'].unshift(orderCol);
+                var dataArray = _this.options['data'];
+                for (var _i = 0, len = dataArray.length; _i < len; _i++) {
+                    dataArray[_i]['maptalks_order'] = _i + startNum;
+                }
             }
         }
         _this._initalColumns = _this.options['columns'];
@@ -211,7 +220,7 @@ var Table = function (_maptalks$JSONAble) {
         _this._columns = _this.getColumns();
         _this._colNum = _this._columns.length;
         _this._data = _this.options['data'];
-        _this._initalData = _this._data; //this.options['data'];
+        _this._initalData = _this._data;
         _this._rowNum = _this._data.length;
         //包含表头
         if (_this.options['header']) {
@@ -413,19 +422,19 @@ var Table = function (_maptalks$JSONAble) {
             for (var i = 0; i < this._colNum; i++) {
                 this._colWidths[i] = 0;
             }
-            for (var _i = 0; _i < this._rowNum; _i++) {
-                this._rowHeights[_i] = 0;
+            for (var _i2 = 0; _i2 < this._rowNum; _i2++) {
+                this._rowHeights[_i2] = 0;
             }
             if (this.options['header']) {
                 this._calculateHeaderHeight();
             }
             this._calculateRowHeight();
         }
-        for (var _i2 = 0; _i2 < this._rowHeights.length; _i2++) {
-            this.tableHeight += this._rowHeights[_i2];
+        for (var _i3 = 0; _i3 < this._rowHeights.length; _i3++) {
+            this.tableHeight += this._rowHeights[_i3];
         }
-        for (var _i3 = 0; _i3 < this._colWidths.length; _i3++) {
-            this.tableWidth += this._colWidths[_i3];
+        for (var _i4 = 0; _i4 < this._colWidths.length; _i4++) {
+            this.tableWidth += this._colWidths[_i4];
         }
     };
 
@@ -437,22 +446,24 @@ var Table = function (_maptalks$JSONAble) {
             var style = this.getCellSymbol(0, i);
             var font = maptalks.StringUtil.getFont(style);
             var size = maptalks.StringUtil.stringLength(header, font);
-            if (size['width'] <= maxWidth) {
+            if (size['width'] >= maxWidth) {
                 maxWidth = size['width'];
             }
-            style['textWrapWidth'] = maxWidth;
-            var row = maptalks.StringUtil.splitTextToRow(header, style);
-            var rowSize = row['size'];
-            if (this._colWidths[i] < rowSize['width']) {
-                if (rowSize['width'] <= maxWidth) {
-                    this._colWidths[i] = rowSize['width'];
-                } else {
-                    this._colWidths[i] = maxWidth;
-                }
+            this._colWidths[i] = maxWidth;
+            if (this._rowHeights[0] < size['height']) {
+                this._rowHeights[0] = size['height'];
             }
-            if (this._rowHeights[i] < rowSize['height']) {
-                this._rowHeights[0] = rowSize['height'];
-            }
+            // this._rowHeights[0] = size['height'];
+            // style['textWrapWidth'] = maxWidth;
+            // let row = maptalks.StringUtil.splitTextToRow(header, style);
+            // let rowSize = row['size'];
+            // if (this._colWidths[i] < rowSize['width']) {
+            //     if (rowSize['width'] <= maxWidth) {
+            //         this._colWidths[i] = rowSize['width'];
+            //     } else {
+            //         this._colWidths[i] = maxWidth;
+            //     }
+            // }
         }
     };
 
@@ -804,11 +815,11 @@ var Table = function (_maptalks$JSONAble) {
             newValues[i + 1] = item[dataIndex];
         }
         var row = void 0;
-        for (var _i4 = 1, _len = this._tableRows.length; _i4 < _len; _i4++) {
-            row = this._tableRows[_i4];
+        for (var _i5 = 1, _len = this._tableRows.length; _i5 < _len; _i5++) {
+            row = this._tableRows[_i5];
             if (!row) return;
             cell = row[colNum];
-            cell.setContent(newValues[_i4]);
+            cell.setContent(newValues[_i5]);
         }
     };
 

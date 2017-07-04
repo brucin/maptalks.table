@@ -122,13 +122,22 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         let orderTitle = this.options['orderTitle'];
         if (!orderTitle) orderTitle = 'No.';
         if (this.options['order']) {
-            let startNum = parseInt(this.options['startNum']);
-            let orderCol = { header: orderTitle, dataIndex: 'maptalks_order', type: 'number' };
-            this.options['columns'].unshift(orderCol);
-
-            let dataArray = this.options['data'];
-            for (let i = 0, len = dataArray.length; i < len; i++) {
-                dataArray[i]['maptalks_order'] = i + startNum;
+            let addColumn = true;
+            let cols = this.options['columns'];
+            for (var i = 0; i < cols.length; i++) {
+                if(cols[i].dataIndex === 'maptalks_order') {
+                    addColumn = false;
+                    break;
+                }
+            }
+            if(addColumn) {
+                let startNum = parseInt(this.options['startNum']);
+                let orderCol = { header: orderTitle, dataIndex: 'maptalks_order', type: 'number' };
+                this.options['columns'].unshift(orderCol);
+                let dataArray = this.options['data'];
+                for (let i = 0, len = dataArray.length; i < len; i++) {
+                    dataArray[i]['maptalks_order'] = i + startNum;
+                }
             }
         }
         this._initalColumns = this.options['columns'];
@@ -136,7 +145,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         this._columns = this.getColumns();
         this._colNum = this._columns.length;
         this._data = this.options['data'];
-        this._initalData = this._data;//this.options['data'];
+        this._initalData = this._data;
         this._rowNum = this._data.length;
         //包含表头
         if (this.options['header']) {
@@ -362,22 +371,24 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
             let style =  this.getCellSymbol(0, i);
             let font = maptalks.StringUtil.getFont(style);
             let size = maptalks.StringUtil.stringLength(header, font);
-            if (size['width'] <= maxWidth) {
+            if (size['width'] >= maxWidth) {
                 maxWidth = size['width'];
             }
-            style['textWrapWidth'] = maxWidth;
-            let row = maptalks.StringUtil.splitTextToRow(header, style);
-            let rowSize = row['size'];
-            if (this._colWidths[i] < rowSize['width']) {
-                if (rowSize['width'] <= maxWidth) {
-                    this._colWidths[i] = rowSize['width'];
-                } else {
-                    this._colWidths[i] = maxWidth;
-                }
+            this._colWidths[i] = maxWidth;
+            if (this._rowHeights[0] < size['height']) {
+                this._rowHeights[0] = size['height'];
             }
-            if (this._rowHeights[i] < rowSize['height']) {
-                this._rowHeights[0] = rowSize['height'];
-            }
+            // this._rowHeights[0] = size['height'];
+            // style['textWrapWidth'] = maxWidth;
+            // let row = maptalks.StringUtil.splitTextToRow(header, style);
+            // let rowSize = row['size'];
+            // if (this._colWidths[i] < rowSize['width']) {
+            //     if (rowSize['width'] <= maxWidth) {
+            //         this._colWidths[i] = rowSize['width'];
+            //     } else {
+            //         this._colWidths[i] = maxWidth;
+            //     }
+            // }
         }
     }
 
