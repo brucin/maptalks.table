@@ -4,7 +4,7 @@ const TABLE_ADJUST_LAYER_PREFIX = maptalks.INTERNAL_LAYER_PREFIX + '_table_adjus
 
 const TOP_ADJUST_LINE_PREFIX = '__table_top_adjust_line_id_';
 
-const LEFT_ADJUST_LINE_PREFIX = '__table_left_adjust_line_id_';
+const LEFT_ADJUST_LINE_PREFIX = '__table_bottom_adjust_line_id_';
 
 Table.include(/** @lends Table.prototype */{
 
@@ -30,12 +30,12 @@ Table.include(/** @lends Table.prototype */{
             map.addLayer(this._adjustLayer);
         }
         this._topLines = this._createTopHandleLine(startViewPoint);
-        this._leftLines = this._createLeftHandleLine(startViewPoint);
+        this._bottomLines = this._createBottomHandleLine(startViewPoint);
     },
 
     _createTopHandleLine(startViewPoint) {
         let map = this.getMap();
-        let height = this._rowHeights[0];//header height
+        let height = this.getTableHeight();
         let handleLines = [];
         let width = 0;
         for (let i = 0; i < this.getColumnNum(); i++) {
@@ -92,15 +92,15 @@ Table.include(/** @lends Table.prototype */{
                 _table._translateTopHandleLine(columnNum, coordOffset);
             });
             handleLine.on('dragstart', function(eventParam) {
-                _table._removeLeftLines();
+                _table._removeBottomLines();
             });
-            handleLine.on('dragend', function(eventParam){
-                // _table._createLeftHandleLine(startViewPoint);
-            });
+            // handleLine.on('dragend', function(eventParam){
+            //     // _table._createBottomHandleLine(startViewPoint);
+            // });
             handleLine.on('mouseover', function(eventParam) {
                 handleLine.setSymbol({
                     'lineColor' : '#ff0000',
-                    'lineWidth' : 1.5
+                    'lineWidth' : 2
                 });
             });
             handleLine.on('mouseout', function(eventParam) {
@@ -121,7 +121,7 @@ Table.include(/** @lends Table.prototype */{
         }
     },
 
-    _createLeftHandleLine(startViewPoint) {
+    _createBottomHandleLine(startViewPoint) {
         let map = this.getMap();
         let width = this.getTableWidth();
         let handleLines = [];
@@ -129,7 +129,7 @@ Table.include(/** @lends Table.prototype */{
         for (let i = 0; i < this.getRowsNum(); i++) {
             let monitorPoint = startViewPoint.add(new maptalks.Point(0, height + 10));
             let monitorCoordinate = map.viewPointToCoordinate(monitorPoint);
-            
+
             height += this.getRowHeight(i);
             let start = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(0, height)));
             let end = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width, height)));
@@ -175,18 +175,18 @@ Table.include(/** @lends Table.prototype */{
                 }
                 _table._resizeRow(rowNum, pointOffset);
                 //translate adjust line
-                _table._translateLeftHandleLine(rowNum, coordOffset);
+                _table._translateBottomHandleLine(rowNum, coordOffset);
             });
             handleLine.on('dragstart', function(eventParam) {
                 _table._removeTopLines();
             });
-            handleLine.on('dragend', function(eventParam){
-                // _table._createTopHandleLine(startViewPoint);
-            });
+            // handleLine.on('dragend', function(eventParam){
+            //     // _table._createTopHandleLine(startViewPoint);
+            // });
             handleLine.on('mouseover', function(eventParam) {
                 handleLine.setSymbol({
                     'lineColor' : '#ff0000',
-                    'lineWidth' : 1.5
+                    'lineWidth' : 2
                 });
             });
             handleLine.on('mouseout', function(eventParam) {
@@ -201,9 +201,9 @@ Table.include(/** @lends Table.prototype */{
         return handleLines;
     },
 
-    _translateLeftHandleLine(rowNum, coordOffset) {
-        for (var i = rowNum + 1; i < this._leftLines.length; i++) {
-            this._leftLines[i].translate(coordOffset);
+    _translateBottomHandleLine(rowNum, coordOffset) {
+        for (var i = rowNum + 1; i < this._bottomLines.length; i++) {
+            this._bottomLines[i].translate(coordOffset);
         }
     },
 
@@ -230,9 +230,9 @@ Table.include(/** @lends Table.prototype */{
         this._topLines.splice(0,this._topLines.length);
     },
 
-    _removeLeftLines() {
-        this._adjustLayer.removeGeometry(this._leftLines);
-        this._leftLines.splice(0,this._leftLines.length);
+    _removeBottomLines() {
+        this._adjustLayer.removeGeometry(this._bottomLines);
+        this._bottomLines.splice(0,this._bottomLines.length);
     },
 
     _resizeRow(rowNum, pointOffset) {

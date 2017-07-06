@@ -2285,7 +2285,7 @@ var TABLE_ADJUST_LAYER_PREFIX = maptalks.INTERNAL_LAYER_PREFIX + '_table_adjust_
 
 var TOP_ADJUST_LINE_PREFIX = '__table_top_adjust_line_id_';
 
-var LEFT_ADJUST_LINE_PREFIX = '__table_left_adjust_line_id_';
+var LEFT_ADJUST_LINE_PREFIX = '__table_bottom_adjust_line_id_';
 
 Table.include( /** @lends Table.prototype */{
 
@@ -2311,13 +2311,13 @@ Table.include( /** @lends Table.prototype */{
             map.addLayer(this._adjustLayer);
         }
         this._topLines = this._createTopHandleLine(startViewPoint);
-        this._leftLines = this._createLeftHandleLine(startViewPoint);
+        this._bottomLines = this._createBottomHandleLine(startViewPoint);
     },
     _createTopHandleLine: function _createTopHandleLine(startViewPoint) {
         var _this = this;
 
         var map = this.getMap();
-        var height = this._rowHeights[0]; //header height
+        var height = this.getTableHeight();
         var handleLines = [];
         var width = 0;
 
@@ -2375,15 +2375,15 @@ Table.include( /** @lends Table.prototype */{
                 _table._translateTopHandleLine(columnNum, coordOffset);
             });
             handleLine.on('dragstart', function (eventParam) {
-                _table._removeLeftLines();
+                _table._removeBottomLines();
             });
-            handleLine.on('dragend', function (eventParam) {
-                // _table._createLeftHandleLine(startViewPoint);
-            });
+            // handleLine.on('dragend', function(eventParam){
+            //     // _table._createBottomHandleLine(startViewPoint);
+            // });
             handleLine.on('mouseover', function (eventParam) {
                 handleLine.setSymbol({
                     'lineColor': '#ff0000',
-                    'lineWidth': 1.5
+                    'lineWidth': 2
                 });
             });
             handleLine.on('mouseout', function (eventParam) {
@@ -2406,7 +2406,7 @@ Table.include( /** @lends Table.prototype */{
             this._topLines[i].translate(coordOffset);
         }
     },
-    _createLeftHandleLine: function _createLeftHandleLine(startViewPoint) {
+    _createBottomHandleLine: function _createBottomHandleLine(startViewPoint) {
         var _this2 = this;
 
         var map = this.getMap();
@@ -2463,18 +2463,18 @@ Table.include( /** @lends Table.prototype */{
                 }
                 _table._resizeRow(rowNum, pointOffset);
                 //translate adjust line
-                _table._translateLeftHandleLine(rowNum, coordOffset);
+                _table._translateBottomHandleLine(rowNum, coordOffset);
             });
             handleLine.on('dragstart', function (eventParam) {
                 _table._removeTopLines();
             });
-            handleLine.on('dragend', function (eventParam) {
-                // _table._createTopHandleLine(startViewPoint);
-            });
+            // handleLine.on('dragend', function(eventParam){
+            //     // _table._createTopHandleLine(startViewPoint);
+            // });
             handleLine.on('mouseover', function (eventParam) {
                 handleLine.setSymbol({
                     'lineColor': '#ff0000',
-                    'lineWidth': 1.5
+                    'lineWidth': 2
                 });
             });
             handleLine.on('mouseout', function (eventParam) {
@@ -2492,9 +2492,9 @@ Table.include( /** @lends Table.prototype */{
         this._adjustLayer.addGeometry(handleLines);
         return handleLines;
     },
-    _translateLeftHandleLine: function _translateLeftHandleLine(rowNum, coordOffset) {
-        for (var i = rowNum + 1; i < this._leftLines.length; i++) {
-            this._leftLines[i].translate(coordOffset);
+    _translateBottomHandleLine: function _translateBottomHandleLine(rowNum, coordOffset) {
+        for (var i = rowNum + 1; i < this._bottomLines.length; i++) {
+            this._bottomLines[i].translate(coordOffset);
         }
     },
     _bindTableEvent: function _bindTableEvent() {
@@ -2517,9 +2517,9 @@ Table.include( /** @lends Table.prototype */{
         this._adjustLayer.removeGeometry(this._topLines);
         this._topLines.splice(0, this._topLines.length);
     },
-    _removeLeftLines: function _removeLeftLines() {
-        this._adjustLayer.removeGeometry(this._leftLines);
-        this._leftLines.splice(0, this._leftLines.length);
+    _removeBottomLines: function _removeBottomLines() {
+        this._adjustLayer.removeGeometry(this._bottomLines);
+        this._bottomLines.splice(0, this._bottomLines.length);
     },
     _resizeRow: function _resizeRow(rowNum, pointOffset) {
         var height = pointOffset['y'];
