@@ -136,7 +136,12 @@ Table.include(/** @lends Table.prototype */{
             }
         }
         this.tableWidth += widthOffset;
-        this.fire('widthchanged', this);
+
+        let eventParam = {};
+        eventParam['target'] = this;
+        eventParam['columnNum'] = colNum;
+        eventParam['widthOffset'] = widthOffset;
+        this.fire('widthchanged', eventParam);
     },
 
     _createCol(insertColNum, data, add) {

@@ -27,8 +27,10 @@ Table.include(/** @lends Table.prototype */{
         if(!this._adjustLayer) {
             this._adjustLayer = new maptalks.VectorLayer(layerId);
             map.addLayer(this._adjustLayer);
+        } else {
+            this._clearAdjustLayer();
+            this._adjustLayer.bringToFront();
         }
-        this._adjustLayer.bringToFront();
         this._topLines = this._createTopHandleLine(startViewPoint);
         this._bottomLines = this._createBottomHandleLine(startViewPoint);
     },
@@ -218,17 +220,17 @@ Table.include(/** @lends Table.prototype */{
         let map = this.getMap();
         let _table = this;
         this.on('hide remove dragstart', function(param) {
-            _table._clearAdjusetLayer();
+            _table._clearAdjustLayer();
         });
         this.on('mouseout', function (param) { 
             map.options['doubleClickZoom'] = true;
         });
         map.on('movestart zoomstart resize', function(param) {
-            _table._clearAdjusetLayer();
+            _table._clearAdjustLayer();
         });
     },
 
-    _clearAdjusetLayer() {
+    _clearAdjustLayer() {
         this._adjustLayer.clear();
     },
 
@@ -267,6 +269,11 @@ Table.include(/** @lends Table.prototype */{
                 cell.setSymbol(symbol);
             }
         }
+        let eventParam = {};
+        eventParam['target'] = this;
+        eventParam['row'] = rowNum;
+        eventParam['heightOffset'] = pointOffset;
+        this.fire('heightchanged', eventParam);
     },
 
     _resizeCol(columnNum, pointOffset) {
@@ -295,6 +302,11 @@ Table.include(/** @lends Table.prototype */{
                 cell.setSymbol(symbol);
             }
         }
-    },
+        let eventParam = {};
+        eventParam['target'] = this;
+        eventParam['columnNum'] = columnNum;
+        eventParam['widthOffset'] = pointOffset;
+        this.fire('widthchanged', eventParam);
+    }
 
 });

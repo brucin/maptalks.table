@@ -505,10 +505,10 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         this._tableRows = [];
         //抛出事件
         this.fire('remove', this);
-        //删除调整线
-        // this.removeStretchLine();
         //清理table上其它属性
         this._deleteTable();
+        this.clearLinker();
+        this.unLink();
     }
 
     setZIndex(index) {
@@ -582,6 +582,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         delete this.options;
         delete this._tableRows;
         delete this._layer;
+        delete this._adjustLayer;
         delete this;
     }
 

@@ -582,10 +582,10 @@ var Table = function (_maptalks$JSONAble) {
         this._tableRows = [];
         //抛出事件
         this.fire('remove', this);
-        //删除调整线
-        // this.removeStretchLine();
         //清理table上其它属性
         this._deleteTable();
+        this.clearLinker();
+        this.unLink();
     };
 
     Table.prototype.setZIndex = function setZIndex(index) {
@@ -659,6 +659,7 @@ var Table = function (_maptalks$JSONAble) {
         delete this.options;
         delete this._tableRows;
         delete this._layer;
+        delete this._adjustLayer;
         delete this;
     };
 
@@ -1422,7 +1423,12 @@ Table.include( /** @lends Table.prototype */{
             }
         }
         this.tableWidth += widthOffset;
-        this.fire('widthchanged', this);
+
+        var eventParam = {};
+        eventParam['target'] = this;
+        eventParam['columnNum'] = colNum;
+        eventParam['widthOffset'] = widthOffset;
+        this.fire('widthchanged', eventParam);
     },
     _createCol: function _createCol(insertColNum, data, add) {
         // this.removeStretchLine();
@@ -1938,7 +1944,6 @@ Table.include( /** @lends Table.prototype */{
     },
     moveRow: function moveRow(sourceRowNum, direction) {
         this.stopEditTable();
-        // this.removeStretchLine();
         var targetRowNum = sourceRowNum;
         if (direction === 'up') {
             if (sourceRowNum > 0) {
@@ -1952,7 +1957,6 @@ Table.include( /** @lends Table.prototype */{
         this._changeRowOrder(sourceRowNum, targetRowNum);
     },
     updateRow: function updateRow(rowNum, item) {
-        // this.removeStretchLine();
         rowNum = rowNum - parseInt(this.options['startNum'] || 1);
         var tableRowNum = rowNum;
         if (this.options['header']) {
@@ -2078,10 +2082,13 @@ Table.include( /** @lends Table.prototype */{
             }
         }
         this.tableHeight += heightOffset;
-        this.fire('heightchanged', this);
+        var eventParam = {};
+        eventParam['target'] = this;
+        eventParam['row'] = rowNum;
+        eventParam['heightOffset'] = heightOffset;
+        this.fire('heightchanged', eventParam);
     },
     _createRow: function _createRow(index, item, add) {
-        // this.removeStretchLine();
         var cols = [];
         var col = void 0,
             dataIndex = void 0,
@@ -2281,6 +2288,68 @@ Table.include( /** @lends Table.prototype */{
     }
 });
 
+Table.include( /** @lends Table.prototype */{
+    linkTo: function linkTo(target) {
+        if (!target instanceof maptalks.Table) return;
+        if (target.getLinker()) return;
+        if (target.getColumnNum() !== this.getColumnNum()) return;
+        target.addLinker(this);
+        this._linkTarget = target;
+        this._moveToNewCoordinates();
+        this._addLinkEvent();
+    },
+    unLink: function unLink() {
+        if (!this._linkTarget) return;
+        this._removeLinkEvent();
+        this._linkTarget.clearLinker();
+        delete this._linkTarget;
+    },
+    clearLinker: function clearLinker() {
+        this._linker = null;
+        delete this._linker;
+    },
+    addLinker: function addLinker(linker) {
+        if (linker instanceof maptalks.Table) return;
+        if (this._linker) return;
+        this._linker = linker;
+    },
+    getLinker: function getLinker() {
+        return this._linker;
+    },
+    _moveToNewCoordinates: function _moveToNewCoordinates() {
+        var map = this.getMap();
+        var targetTableCoordinate = this._linkTarget.getCoordinates(),
+            targetViewPoint = map.coordinateToViewPoint(targetTableCoordinate);
+        var tableHeight = this._linkTarget.getTableHeight();
+        var targetCoordinate = map.viewPointToCoordinate(targetViewPoint.add(new maptalks.Point(0, tableHeight)));
+        this.setCoordinates(targetCoordinate);
+        this.show();
+    },
+    _adjustColumnWidth: function _adjustColumnWidth(eventParam) {
+        var columnNum = eventParam['columnNum'];
+        var widthOffset = eventParam['widthOffset'];
+        this._resizeCol(columnNum, new maptalks.Point(widthOffset, 0));
+    },
+    _addLinkEvent: function _addLinkEvent() {
+        var target = this._linkTarget;
+        if (!target) return;
+        target.on('dragstart', this.hide, this);
+        target.on('dragend', this._moveToNewCoordinates, this);
+        target.on('remove', this.unLink, this);
+        target.on('heightchanged', this._moveToNewCoordinates, this);
+        target.on('widthchanged', this._adjustColumnWidth, this);
+    },
+    _removeLinkEvent: function _removeLinkEvent() {
+        var target = this._linkTarget;
+        if (!target) return;
+        target.off('dragstart', this.hide, this);
+        target.off('dragend', this._moveToNewCoordinates, this);
+        target.off('remove', this.unLink, this);
+        target.off('heightchanged', this._moveToNewCoordinates, this);
+        target.off('widthchanged', this._adjustColumnWidth, this);
+    }
+});
+
 var TABLE_ADJUST_LAYER_PREFIX = maptalks.INTERNAL_LAYER_PREFIX + '_table_adjust_layer';
 
 var TOP_ADJUST_LINE_PREFIX = '__table_top_adjust_line_id_';
@@ -2308,8 +2377,10 @@ Table.include( /** @lends Table.prototype */{
         if (!this._adjustLayer) {
             this._adjustLayer = new maptalks.VectorLayer(layerId);
             map.addLayer(this._adjustLayer);
+        } else {
+            this._clearAdjustLayer();
+            this._adjustLayer.bringToFront();
         }
-        this._adjustLayer.bringToFront();
         this._topLines = this._createTopHandleLine(startViewPoint);
         this._bottomLines = this._createBottomHandleLine(startViewPoint);
     },
@@ -2508,16 +2579,16 @@ Table.include( /** @lends Table.prototype */{
         var map = this.getMap();
         var _table = this;
         this.on('hide remove dragstart', function (param) {
-            _table._clearAdjusetLayer();
+            _table._clearAdjustLayer();
         });
         this.on('mouseout', function (param) {
             map.options['doubleClickZoom'] = true;
         });
         map.on('movestart zoomstart resize', function (param) {
-            _table._clearAdjusetLayer();
+            _table._clearAdjustLayer();
         });
     },
-    _clearAdjusetLayer: function _clearAdjusetLayer() {
+    _clearAdjustLayer: function _clearAdjustLayer() {
         this._adjustLayer.clear();
     },
     _removeTopLines: function _removeTopLines() {
@@ -2555,6 +2626,11 @@ Table.include( /** @lends Table.prototype */{
                 cell.setSymbol(symbol);
             }
         }
+        var eventParam = {};
+        eventParam['target'] = this;
+        eventParam['row'] = rowNum;
+        eventParam['heightOffset'] = pointOffset;
+        this.fire('heightchanged', eventParam);
     },
     _resizeCol: function _resizeCol(columnNum, pointOffset) {
         var width = pointOffset['x'];
@@ -2584,10 +2660,13 @@ Table.include( /** @lends Table.prototype */{
                 cell.setSymbol(symbol);
             }
         }
+        var eventParam = {};
+        eventParam['target'] = this;
+        eventParam['columnNum'] = columnNum;
+        eventParam['widthOffset'] = pointOffset;
+        this.fire('widthchanged', eventParam);
     }
 });
-
-// import './src/Table.Stretch';
 
 exports.Table = Table;
 

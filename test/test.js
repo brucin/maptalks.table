@@ -364,4 +364,110 @@ describe('Table', function () {
             table.remove();
         });
     });
+
+    describe('Link', function () {
+        it('link to table', function () {
+            let targetTable = new maptalks.Table(tableOptions);
+            targetTable.addTo(layer);
+            let linker = new maptalks.Table(dynamicTableOptions);
+            linker.addTo(layer);
+
+            let map = linker.getMap();
+            let targetTableCoordinate = targetTable.getCoordinates(),
+            targetViewPoint = map.coordinateToViewPoint(targetTableCoordinate);
+            let tableHeight = targetTable.getTableHeight();
+            let targetCoordinate = map.viewPointToCoordinate(targetViewPoint.add(new maptalks.Point(0, tableHeight)));
+            linker.linkTo(targetTable);
+            expect(linker.getCoordinates()).to.be.closeTo(targetCoordinate);
+            targetTable.remove();
+            linker.remove();
+        });
+
+        it('drag the table which has linker', function () {
+            let targetTable = new maptalks.Table(tableOptions);
+            targetTable.addTo(layer);
+            let linker = new maptalks.Table(dynamicTableOptions);
+            linker.addTo(layer);
+            linker.linkTo(targetTable);
+            let startCoordinate = linker.getCoordinates();
+            //drag target table
+            dragTable(targetTable);
+            expect(linker.getCoordinates()).not.to.be.closeTo(startCoordinate);
+
+            let map = linker.getMap();
+            let targetTableCoordinate = targetTable.getCoordinates(),
+            targetViewPoint = map.coordinateToViewPoint(targetTableCoordinate);
+            let tableHeight = targetTable.getTableHeight();
+            let targetCoordinate = map.viewPointToCoordinate(targetViewPoint.add(new maptalks.Point(0, tableHeight)));            
+            expect(linker.getCoordinates()).to.be.closeTo(targetCoordinate);
+
+            targetTable.remove();
+            linker.remove();
+        });
+
+        it('drag table after unlink', function () {
+            let targetTable = new maptalks.Table(tableOptions);
+            targetTable.addTo(layer);
+            let linker = new maptalks.Table(dynamicTableOptions);
+            linker.addTo(layer);
+            linker.linkTo(targetTable);
+            
+            let map = linker.getMap();
+            let targetTableCoordinate = targetTable.getCoordinates(),
+            targetViewPoint = map.coordinateToViewPoint(targetTableCoordinate);
+            let tableHeight = targetTable.getTableHeight();
+            let targetCoordinate = map.viewPointToCoordinate(targetViewPoint.add(new maptalks.Point(0, tableHeight))); 
+            expect(linker.getCoordinates()).to.be.closeTo(targetCoordinate);
+            linker.unLink();
+            //drag target table
+            dragTable(targetTable);
+
+            targetTableCoordinate = targetTable.getCoordinates();
+            targetViewPoint = map.coordinateToViewPoint(targetTableCoordinate);
+            let newCoordinate = map.viewPointToCoordinate(targetViewPoint.add(new maptalks.Point(0, tableHeight)));
+            let linkerCoordinate = linker.getCoordinates();
+            expect(linkerCoordinate).not.to.be.closeTo(newCoordinate);
+            expect(linkerCoordinate).to.be.closeTo(targetCoordinate);
+
+            targetTable.remove();
+            linker.remove();
+        });
+
+        it('change the table "row height" which has linker', function () {
+            let targetTable = new maptalks.Table(tableOptions);
+            targetTable.addTo(layer);
+            let linker = new maptalks.Table(dynamicTableOptions);
+            linker.addTo(layer);
+            linker.linkTo(targetTable);
+
+            
+            let map = linker.getMap();
+            let targetTableCoordinate = targetTable.getCoordinates(),
+            targetViewPoint = map.coordinateToViewPoint(targetTableCoordinate);
+            let tableHeight = targetTable.getTableHeight();
+            let firstRowHeight = targetTable.getRowHeight(1);
+            targetTable.setRowHeight(1, 100);
+
+            let targetCoordinate = map.viewPointToCoordinate(targetViewPoint.add(new maptalks.Point(0, tableHeight+(100-firstRowHeight)))); 
+            expect(linker.getCoordinates()).to.be.closeTo(targetCoordinate);
+
+            targetTable.remove();
+            linker.remove();
+        });
+
+        it('change the table "column width" which has linker', function () {
+            let targetTable = new maptalks.Table(tableOptions);
+            targetTable.addTo(layer);
+            let linker = new maptalks.Table(dynamicTableOptions);
+            linker.addTo(layer);
+            linker.linkTo(targetTable);
+            expect(linker.getColumnWidth(1)).not.to.be.equal(300);
+            targetTable.setColumnWidth(1, 300);
+            expect(linker.getColumnWidth(1)).to.be.equal(300);
+            targetTable.remove();
+            linker.remove();
+        });
+
+
+    });
 });

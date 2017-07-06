@@ -45,7 +45,6 @@ Table.include(/** @lends Table.prototype */{
 
     moveRow(sourceRowNum, direction) {
         this.stopEditTable();
-        // this.removeStretchLine();
         let targetRowNum = sourceRowNum;
         if (direction === 'up') {
             if (sourceRowNum > 0) {
@@ -61,7 +60,6 @@ Table.include(/** @lends Table.prototype */{
 
 
     updateRow(rowNum, item) {
-        // this.removeStretchLine();
         rowNum = rowNum - parseInt(this.options['startNum'] || 1);
         let tableRowNum = rowNum;
         if (this.options['header']) {
@@ -187,11 +185,14 @@ Table.include(/** @lends Table.prototype */{
             }
         }
         this.tableHeight += heightOffset;
-        this.fire('heightchanged', this);
+        let eventParam = {};
+        eventParam['target'] = this;
+        eventParam['row'] = rowNum;
+        eventParam['heightOffset'] = heightOffset;
+        this.fire('heightchanged', eventParam);
     },
 
     _createRow(index, item, add) {
-        // this.removeStretchLine();
         let cols = [];
         let col, dataIndex, text, cellOffset, size, cell, coordinate, symbol;
         let rowHeight = this._rowHeights[index];
