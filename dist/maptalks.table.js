@@ -2303,13 +2303,13 @@ Table.include( /** @lends Table.prototype */{
         var map = this.getMap();
         var coordinate = this.getCoordinates(),
             startViewPoint = map.coordinateToViewPoint(coordinate);
-        var uid = maptalks.Util.UID();
         var layerId = TABLE_ADJUST_LAYER_PREFIX;
         this._adjustLayer = map.getLayer(layerId);
         if (!this._adjustLayer) {
             this._adjustLayer = new maptalks.VectorLayer(layerId);
             map.addLayer(this._adjustLayer);
         }
+        this._adjustLayer.bringToFront();
         this._topLines = this._createTopHandleLine(startViewPoint);
         this._bottomLines = this._createBottomHandleLine(startViewPoint);
     },
@@ -2338,7 +2338,8 @@ Table.include( /** @lends Table.prototype */{
                 'cursor': 'ew-resize',
                 'symbol': {
                     'lineColor': '#ffffff',
-                    'lineWidth': 1.5
+                    'lineWidth': 3,
+                    'lineOpacity': 0.3
                 }
             });
             var _table = _this;
@@ -2375,11 +2376,13 @@ Table.include( /** @lends Table.prototype */{
                 _table._translateTopHandleLine(columnNum, coordOffset);
             });
             handleLine.on('dragstart', function (eventParam) {
+                _table._isDragging = false;
                 _table._removeBottomLines();
             });
-            // handleLine.on('dragend', function(eventParam){
-            //     // _table._createBottomHandleLine(startViewPoint);
-            // });
+            handleLine.on('dragend', function (eventParam) {
+                _table._isDragging = true;
+                // _table._createBottomHandleLine(startViewPoint);
+            });
             handleLine.on('mouseover', function (eventParam) {
                 handleLine.setSymbol({
                     'lineColor': '#ff0000',
@@ -2389,7 +2392,8 @@ Table.include( /** @lends Table.prototype */{
             handleLine.on('mouseout', function (eventParam) {
                 handleLine.setSymbol({
                     'lineColor': '#ffffff',
-                    'lineWidth': 1.5
+                    'lineWidth': 3,
+                    'lineOpacity': 0.3
                 });
             });
             handleLines.push(handleLine);
@@ -2429,7 +2433,8 @@ Table.include( /** @lends Table.prototype */{
                 'cursor': 'ns-resize',
                 'symbol': {
                     'lineColor': '#ffffff',
-                    'lineWidth': 1.5
+                    'lineWidth': 3,
+                    'lineOpacity': 0.3
                 }
             });
             var _table = _this2;
@@ -2466,11 +2471,12 @@ Table.include( /** @lends Table.prototype */{
                 _table._translateBottomHandleLine(rowNum, coordOffset);
             });
             handleLine.on('dragstart', function (eventParam) {
+                _table._isDragging = false;
                 _table._removeTopLines();
             });
-            // handleLine.on('dragend', function(eventParam){
-            //     // _table._createTopHandleLine(startViewPoint);
-            // });
+            handleLine.on('dragend', function (eventParam) {
+                _table._isDragging = true;
+            });
             handleLine.on('mouseover', function (eventParam) {
                 handleLine.setSymbol({
                     'lineColor': '#ff0000',
@@ -2480,7 +2486,8 @@ Table.include( /** @lends Table.prototype */{
             handleLine.on('mouseout', function (eventParam) {
                 handleLine.setSymbol({
                     'lineColor': '#ffffff',
-                    'lineWidth': 1.5
+                    'lineWidth': 3,
+                    'lineOpacity': 0.3
                 });
             });
             handleLines.push(handleLine);
@@ -2500,13 +2507,13 @@ Table.include( /** @lends Table.prototype */{
     _bindTableEvent: function _bindTableEvent() {
         var map = this.getMap();
         var _table = this;
-        this.on('hide remove dragstart movestart', function () {
+        this.on('hide remove dragstart', function (param) {
             _table._clearAdjusetLayer();
         });
-        this.on('mouseout', function () {
+        this.on('mouseout', function (param) {
             map.options['doubleClickZoom'] = true;
         });
-        map.on('movestart zoomstart resize', function () {
+        map.on('movestart zoomstart resize', function (param) {
             _table._clearAdjusetLayer();
         });
     },
