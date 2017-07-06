@@ -155,18 +155,18 @@ class TableDragHandler extends maptalks.Handler  {
         if (!this._lastPos) {
             this._lastPos = currentPos;
         }
-        var dragOffset = currentPos.substract(this._lastPos);
+        var coordOffset = currentPos.substract(this._lastPos);
 
         var axis = this._shadow.options['dragOnAxis'];
         if (axis === 'x') {
-            dragOffset.y = 0;
+            coordOffset.y = 0;
         } else if (axis === 'y') {
-            dragOffset.x = 0;
+            coordOffset.x = 0;
         }
         this._lastPos = currentPos;
-        this._shadow.translate(dragOffset);
+        this._shadow.translate(coordOffset);
 
-        eventParam['dragOffset'] = dragOffset;
+        eventParam['coordOffset'] = coordOffset;
         this._shadow._fireEvent('dragging', eventParam);
 
         /**

@@ -151,17 +151,6 @@ Table.include(/** @lends Table.prototype */{
         return saveSymbol;
     },
 
-    // removeNumLabelByRowNum: function (rowNum) {
-    //     for (var i = 0; i < this._geometryNumLabels.length; i++) {
-    //         let label = this._geometryNumLabels[i];
-    //         if(label.getContent() === rowNum+'') {
-    //             label.remove();
-    //             this._geometryNumLabels.splice(i, 1);
-    //             break;
-    //         }
-    //     }
-    // },
-
     _addEditEventToCell: function (cell) {
         cell.startEditText();
         var textEditor = cell._textEditor;

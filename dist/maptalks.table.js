@@ -817,8 +817,8 @@ var Table = function (_maptalks$JSONAble) {
     };
 
     Table.prototype._dragTable = function _dragTable() {
-        var dragOffset = event['dragOffset'];
-        this._translate(dragOffset);
+        var coordOffset = event['coordOffset'];
+        this._translate(coordOffset);
         this.fire('moving dragging', { 'target': this });
     };
 
@@ -1144,17 +1144,6 @@ Table.include( /** @lends Table.prototype */{
         };
         return saveSymbol;
     },
-
-    // removeNumLabelByRowNum: function (rowNum) {
-    //     for (var i = 0; i < this._geometryNumLabels.length; i++) {
-    //         let label = this._geometryNumLabels[i];
-    //         if(label.getContent() === rowNum+'') {
-    //             label.remove();
-    //             this._geometryNumLabels.splice(i, 1);
-    //             break;
-    //         }
-    //     }
-    // },
 
     _addEditEventToCell: function _addEditEventToCell(cell) {
         cell.startEditText();
@@ -1774,18 +1763,18 @@ var TableDragHandler = function (_maptalks$Handler) {
         if (!this._lastPos) {
             this._lastPos = currentPos;
         }
-        var dragOffset = currentPos.substract(this._lastPos);
+        var coordOffset = currentPos.substract(this._lastPos);
 
         var axis = this._shadow.options['dragOnAxis'];
         if (axis === 'x') {
-            dragOffset.y = 0;
+            coordOffset.y = 0;
         } else if (axis === 'y') {
-            dragOffset.x = 0;
+            coordOffset.x = 0;
         }
         this._lastPos = currentPos;
-        this._shadow.translate(dragOffset);
+        this._shadow.translate(coordOffset);
 
-        eventParam['dragOffset'] = dragOffset;
+        eventParam['coordOffset'] = coordOffset;
         this._shadow._fireEvent('dragging', eventParam);
 
         /**
@@ -2292,7 +2281,7 @@ Table.include( /** @lends Table.prototype */{
     }
 });
 
-var TABLE_ADJUST_LAYER_PREFIX = maptalks.INTERNAL_LAYER_PREFIX + '_table_adjust_layer_';
+var TABLE_ADJUST_LAYER_PREFIX = maptalks.INTERNAL_LAYER_PREFIX + '_table_adjust_layer';
 
 var TOP_ADJUST_LINE_PREFIX = '__table_top_adjust_line_id_';
 
@@ -2306,16 +2295,16 @@ Table.include( /** @lends Table.prototype */{
     prepareAdjust: function prepareAdjust() {
         if (!this.getMap()) return;
         if (!this.options['header']) return;
-        if (this._adjustLaye && !maptalks.Util.isArrayHasData(this._adjustLayer.getGeometries())) return;
+        // if(this._adjustLayer && this._topLines.length > 0) return;
         this._prepareEditLayer();
-        // this.config('draggable', false);
+        this._bindTableEvent();
     },
     _prepareEditLayer: function _prepareEditLayer() {
         var map = this.getMap();
         var coordinate = this.getCoordinates(),
             startViewPoint = map.coordinateToViewPoint(coordinate);
         var uid = maptalks.Util.UID();
-        var layerId = TABLE_ADJUST_LAYER_PREFIX + uid;
+        var layerId = TABLE_ADJUST_LAYER_PREFIX;
         this._adjustLayer = map.getLayer(layerId);
         if (!this._adjustLayer) {
             this._adjustLayer = new maptalks.VectorLayer(layerId);
@@ -2323,7 +2312,6 @@ Table.include( /** @lends Table.prototype */{
         }
         this._topLines = this._createTopHandleLine(startViewPoint);
         this._leftLines = this._createLeftHandleLine(startViewPoint);
-        this._bindTableEvent();
     },
     _createTopHandleLine: function _createTopHandleLine(startViewPoint) {
         var _this = this;
@@ -2334,7 +2322,11 @@ Table.include( /** @lends Table.prototype */{
         var width = 0;
 
         var _loop = function _loop(i) {
-            var monitorCoordinate = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width + 10, 0)));
+            var monitorPoint = startViewPoint.add(new maptalks.Point(width + 10, 0));
+            var monitorCoordinate = map.viewPointToCoordinate(monitorPoint);
+            monitorPoint.y = 0;
+            monitorCoordinate.y = 0;
+
             width += _this.getColumnWidth(i);
             var start = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width, 0)));
             var end = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width, height)));
@@ -2354,33 +2346,51 @@ Table.include( /** @lends Table.prototype */{
                 var lineId = handleLine.getId();
                 if (!lineId) return;
                 var columnNum = parseInt(lineId.substring(lineId.lastIndexOf('_') + 1));
-                var dragOffset = eventParam['dragOffset'];
-                var nowCoordinate = new maptalks.Coordinate(eventParam['coordinate'].x, 0);
-                var monitorPosition = map.coordinateToViewPoint(monitorCoordinate);
-                monitorCoordinate.y = 0;
+                var coordOffset = eventParam['coordOffset'];
+                var pointOffset = eventParam['pointOffset'];
+                var nowCoordinate = eventParam['coordinate'];
+                nowCoordinate.y = 0;
                 if (nowCoordinate.x < monitorCoordinate.x) {
                     //out of scope
-                    var offset = monitorCoordinate.substract(nowCoordinate);
+                    coordOffset = monitorCoordinate.substract(nowCoordinate);
                     if (handleLine.options['dragShadow']) {
-                        handleLine.draggable._shadow.translate(offset);
+                        handleLine.draggable._shadow.translate(coordOffset);
                     } else {
-                        handleLine.translate(offset);
+                        handleLine.translate(coordOffset);
                     }
                     handleLine.draggable._endDrag(eventParam);
+
                     var columnWidth = _table.getColumnWidth(columnNum);
-                    var startCoordinate = map.viewPointToCoordinate(monitorPosition.add(new maptalks.Point(columnWidth - 10, 0)));
+                    var startPoint = monitorPoint.add(new maptalks.Point(columnWidth - 10, 0));
+
+                    var startCoordinate = map.viewPointToCoordinate(startPoint);
+
                     startCoordinate.y = 0;
-                    dragOffset = monitorCoordinate.substract(startCoordinate);
+                    coordOffset = monitorCoordinate.substract(startCoordinate);
+
+                    pointOffset = monitorPoint.substract(startPoint);
                 }
-                _table._resizeCol(columnNum, dragOffset);
+                _table._resizeCol(columnNum, pointOffset);
                 //translate adjust line
-                _table._translateTopHandleLine(columnNum, dragOffset);
+                _table._translateTopHandleLine(columnNum, coordOffset);
             });
             handleLine.on('dragstart', function (eventParam) {
                 _table._removeLeftLines();
             });
             handleLine.on('dragend', function (eventParam) {
-                _table._createLeftHandleLine(startViewPoint);
+                // _table._createLeftHandleLine(startViewPoint);
+            });
+            handleLine.on('mouseover', function (eventParam) {
+                handleLine.setSymbol({
+                    'lineColor': '#ff0000',
+                    'lineWidth': 1.5
+                });
+            });
+            handleLine.on('mouseout', function (eventParam) {
+                handleLine.setSymbol({
+                    'lineColor': '#ffffff',
+                    'lineWidth': 1.5
+                });
             });
             handleLines.push(handleLine);
         };
@@ -2391,9 +2401,9 @@ Table.include( /** @lends Table.prototype */{
         this._adjustLayer.addGeometry(handleLines);
         return handleLines;
     },
-    _translateTopHandleLine: function _translateTopHandleLine(columnNum, dragOffset) {
+    _translateTopHandleLine: function _translateTopHandleLine(columnNum, coordOffset) {
         for (var i = columnNum + 1; i < this._topLines.length; i++) {
-            this._topLines[i].translate(dragOffset);
+            this._topLines[i].translate(coordOffset);
         }
     },
     _createLeftHandleLine: function _createLeftHandleLine(startViewPoint) {
@@ -2405,7 +2415,9 @@ Table.include( /** @lends Table.prototype */{
         var height = 0;
 
         var _loop2 = function _loop2(i) {
-            var monitorCoordinate = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(0, height + 10)));
+            var monitorPoint = startViewPoint.add(new maptalks.Point(0, height + 10));
+            var monitorCoordinate = map.viewPointToCoordinate(monitorPoint);
+
             height += _this2.getRowHeight(i);
             var start = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(0, height)));
             var end = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width, height)));
@@ -2425,9 +2437,11 @@ Table.include( /** @lends Table.prototype */{
                 var lineId = handleLine.getId();
                 if (!lineId) return;
                 var rowNum = parseInt(lineId.substring(lineId.lastIndexOf('_') + 1));
-                var dragOffset = eventParam['dragOffset'];
+                var coordOffset = eventParam['coordOffset'];
+                var pointOffset = eventParam['pointOffset'];
                 var nowCoordinate = new maptalks.Coordinate(0, eventParam['coordinate'].y);
-                var monitorPosition = map.coordinateToViewPoint(monitorCoordinate);
+
+                monitorPoint.x = 0;
                 monitorCoordinate.x = 0;
                 if (nowCoordinate.y > monitorCoordinate.y) {
                     //out of scope
@@ -2437,21 +2451,37 @@ Table.include( /** @lends Table.prototype */{
                     } else {
                         handleLine.translate(offset);
                     }
+
                     handleLine.draggable._endDrag(eventParam);
                     var rowHeight = _table.getRowHeight(rowNum);
-                    var startCoordinate = map.viewPointToCoordinate(monitorPosition.add(new maptalks.Point(0, rowHeight - 10)));
+                    var startOffset = monitorPoint.add(new maptalks.Point(0, rowHeight - 10));
+
+                    var startCoordinate = map.viewPointToCoordinate(startOffset);
                     startCoordinate.x = 0;
-                    dragOffset = monitorCoordinate.substract(startCoordinate);
+                    coordOffset = monitorCoordinate.substract(startCoordinate);
+                    pointOffset = monitorPoint.substract(startOffset);
                 }
-                _table._resizeRow(rowNum, dragOffset);
+                _table._resizeRow(rowNum, pointOffset);
                 //translate adjust line
-                _table._translateLeftHandleLine(rowNum, dragOffset);
+                _table._translateLeftHandleLine(rowNum, coordOffset);
             });
             handleLine.on('dragstart', function (eventParam) {
                 _table._removeTopLines();
             });
             handleLine.on('dragend', function (eventParam) {
-                _table._createTopHandleLine(startViewPoint);
+                // _table._createTopHandleLine(startViewPoint);
+            });
+            handleLine.on('mouseover', function (eventParam) {
+                handleLine.setSymbol({
+                    'lineColor': '#ff0000',
+                    'lineWidth': 1.5
+                });
+            });
+            handleLine.on('mouseout', function (eventParam) {
+                handleLine.setSymbol({
+                    'lineColor': '#ffffff',
+                    'lineWidth': 1.5
+                });
             });
             handleLines.push(handleLine);
         };
@@ -2462,44 +2492,37 @@ Table.include( /** @lends Table.prototype */{
         this._adjustLayer.addGeometry(handleLines);
         return handleLines;
     },
-    _translateLeftHandleLine: function _translateLeftHandleLine(rowNum, dragOffset) {
+    _translateLeftHandleLine: function _translateLeftHandleLine(rowNum, coordOffset) {
         for (var i = rowNum + 1; i < this._leftLines.length; i++) {
-            this._leftLines[i].translate(dragOffset);
+            this._leftLines[i].translate(coordOffset);
         }
     },
     _bindTableEvent: function _bindTableEvent() {
         var map = this.getMap();
         var _table = this;
         this.on('hide remove dragstart movestart', function () {
-            _table._remove();
+            _table._clearAdjusetLayer();
         });
         this.on('mouseout', function () {
             map.options['doubleClickZoom'] = true;
         });
         map.on('movestart zoomstart resize', function () {
-            _table._remove();
+            _table._clearAdjusetLayer();
         });
     },
-    _remove: function _remove() {
+    _clearAdjusetLayer: function _clearAdjusetLayer() {
         this._adjustLayer.clear();
     },
     _removeTopLines: function _removeTopLines() {
-        if (this._topLines) {
-            for (var len = this._topLines.length, i = len - 1; i >= 0; i--) {
-                this._topLines[i].remove();
-            }
-        }
+        this._adjustLayer.removeGeometry(this._topLines);
+        this._topLines.splice(0, this._topLines.length);
     },
     _removeLeftLines: function _removeLeftLines() {
-        if (this._leftLines) {
-            for (var len = this._leftLines.length, i = len - 1; i >= 0; i--) {
-                this._leftLines[i].remove();
-            }
-        }
+        this._adjustLayer.removeGeometry(this._leftLines);
+        this._leftLines.splice(0, this._leftLines.length);
     },
-    _resizeRow: function _resizeRow(rowNum, dragOffset) {
-        var pixel = this.getMap().coordinateToPoint(dragOffset);
-        var height = pixel['y'];
+    _resizeRow: function _resizeRow(rowNum, pointOffset) {
+        var height = pointOffset['y'];
         var row,
             cell,
             symbol,
@@ -2526,9 +2549,8 @@ Table.include( /** @lends Table.prototype */{
             }
         }
     },
-    _resizeCol: function _resizeCol(columnNum, dragOffset) {
-        var pixel = this.getMap().coordinateToPoint(dragOffset);
-        var width = pixel['x'];
+    _resizeCol: function _resizeCol(columnNum, pointOffset) {
+        var width = pointOffset['x'];
         var row = void 0,
             cell = void 0,
             symbol = void 0,

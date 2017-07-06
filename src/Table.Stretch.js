@@ -81,17 +81,17 @@ Table.include(/** @lends Table.prototype */{
                 me._startViewPoint = event['viewPoint'];
             });
             this._rowLine.on('dragend', function (event) {
-                var dragOffset = event['coordinate'].substract(me._startCoordinate);
+                var coordOffset = event['coordinate'].substract(me._startCoordinate);
                 var currentPoint = event['viewPoint'];
                 var offset = currentPoint.substract(me._startViewPoint);
                 var cellHeight = me._rowHeights[me._stretchRowNum];
                 if ((cellHeight + offset.y) > 5) {
-                    dragOffset.x = 0;
-                    me._resizeRow(dragOffset);
+                    coordOffset.x = 0;
+                    me._resizeRow(coordOffset);
                 } else {
-                    dragOffset.x = dragOffset.x * -1;
-                    dragOffset.y = dragOffset.y * -1;
-                    me._rowLine.translate(dragOffset);
+                    coordOffset.x = coordOffset.x * -1;
+                    coordOffset.y = coordOffset.y * -1;
+                    me._rowLine.translate(coordOffset);
                 }
                 me.getMap().config({
                     'draggable': true
@@ -104,8 +104,8 @@ Table.include(/** @lends Table.prototype */{
         this._rowLine.bringToFront();
     },
 
-    _resizeRow: function (dragOffset) {
-        var pixel = this.getMap().coordinateToPoint(dragOffset);
+    _resizeRow: function (coordOffset) {
+        var pixel = this.getMap().coordinateToPoint(coordOffset);
         var height = pixel['y'];
         var row, cell, symbol,
             newHeight = this._rowHeights[this._stretchRowNum] + height;
@@ -186,17 +186,17 @@ Table.include(/** @lends Table.prototype */{
                 me._startViewPoint = event['viewPoint'];
             });
             this._colLine.on('dragend', function (event) {
-                var dragOffset = event['coordinate'].substract(me._startCoordinate);
+                var coordOffset = event['coordinate'].substract(me._startCoordinate);
                 var currentPoint = event['viewPoint'];
                 var offset = currentPoint.substract(me._startViewPoint);
                 var cellWidth = me._colWidths[me._stretchColNum];
                 if ((cellWidth + offset.x) > 8) {
-                    dragOffset.y = 0;
-                    me._resizeCol(dragOffset);
+                    coordOffset.y = 0;
+                    me._resizeCol(coordOffset);
                 } else {
-                    dragOffset.x = dragOffset.x * -1;
-                    dragOffset.y = dragOffset.y * -1;
-                    me._colLine.translate(dragOffset);
+                    coordOffset.x = coordOffset.x * -1;
+                    coordOffset.y = coordOffset.y * -1;
+                    me._colLine.translate(coordOffset);
                 }
                 me.getMap().config({
                     'draggable': true
@@ -209,8 +209,8 @@ Table.include(/** @lends Table.prototype */{
         this._colLine.bringToFront();
     },
 
-    _resizeCol: function (dragOffset) {
-        var pixel = this.getMap().coordinateToPoint(dragOffset);
+    _resizeCol: function (coordOffset) {
+        var pixel = this.getMap().coordinateToPoint(coordOffset);
         var width = pixel['x'];
         var row, cell, symbol,
             newWidth = this._colWidths[this._stretchColNum] + width;

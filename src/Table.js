@@ -738,8 +738,8 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
     }
 
     _dragTable() {
-        let dragOffset = event['dragOffset'];
-        this._translate(dragOffset);
+        let coordOffset = event['coordOffset'];
+        this._translate(coordOffset);
         this.fire('moving dragging', { 'target' : this });
     }
 
