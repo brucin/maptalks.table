@@ -98,6 +98,7 @@ var defaultOptions = {
     'width': 300,
     'height': 300,
     'draggable': true,
+    'adjustable': true,
     'editable': true,
     'header': true,
     'order': true,
@@ -163,6 +164,7 @@ var Table = function (_maptalks$JSONAble) {
         'width': 300,
         'height': 300,
         'draggable': true,
+        'adjustable': true,
         'editable': true,
         'header': true,
         'order': true,
@@ -185,6 +187,7 @@ var Table = function (_maptalks$JSONAble) {
         if (!_this.options['order'] && _this.options['order'] !== false) _this.options['order'] = true;
         _this.options['visible'] = true;
         _this.options['editing'] = false;
+        _this.options['adjustable'] = _this.options['adjustable'] || true;
         _this.options['showOrderNumber'] = true;
         _this.options['startNum'] = _this.options['startNum'] || 1;
         if (!_this.options['data'] && _this.options['data'].length === 0) {
@@ -517,7 +520,6 @@ var Table = function (_maptalks$JSONAble) {
                 row[j].hide();
             }
         }
-        // this.removeStretchLine();
         this.fire('hide', this);
         this.options['visible'] = false;
     };
@@ -740,6 +742,7 @@ var Table = function (_maptalks$JSONAble) {
         var coorObj = new maptalks.Coordinate(coordinate.x, coordinate.y);
         var offset = coorObj.substract(this.getCenter());
         this._translate(offset);
+        this.fire('positonchanged', this);
     };
 
     Table.prototype._addToLayer = function _addToLayer(tableRow, init) {
@@ -809,19 +812,22 @@ var Table = function (_maptalks$JSONAble) {
         }
     };
 
-    Table.prototype._dragTableStart = function _dragTableStart() {
-        this.fire('dragstart', { 'target': this });
-    };
+    // _dragTableStart() {
+    //     this.fire('dragstart', { 'target':this });
+    //     this.fire('movestart', { 'target':this });
+    // }
 
-    Table.prototype._dragTableEnd = function _dragTableEnd() {
-        this.fire('dragend', { 'target': this });
-    };
+    // _dragTableEnd() {
+    //     this.fire('dragend', { 'target':this });
+    //     this.fire('moveend', { 'target':this });
+    // }
 
-    Table.prototype._dragTable = function _dragTable() {
-        var coordOffset = event['coordOffset'];
-        this._translate(coordOffset);
-        this.fire('moving dragging', { 'target': this });
-    };
+    // _dragTable() {
+    //     let coordOffset = event['coordOffset'];
+    //     this._translate(coordOffset);
+    //     this.fire('dragging', { 'target' : this });
+    //     this.fire('moving', { 'target' : this });
+    // }
 
     Table.prototype._translate = function _translate(offset) {
         var row = void 0,
@@ -1427,11 +1433,10 @@ Table.include( /** @lends Table.prototype */{
         var eventParam = {};
         eventParam['target'] = this;
         eventParam['columnNum'] = colNum;
-        eventParam['widthOffset'] = widthOffset;
+        eventParam['widthOffset'] = new maptalks.Point(widthOffset, 0);
         this.fire('widthchanged', eventParam);
     },
     _createCol: function _createCol(insertColNum, data, add) {
-        // this.removeStretchLine();
         var startCol = insertColNum; //调整起始列
         if (!data || data.length === 0) data = '';
         //insert column
@@ -1940,6 +1945,7 @@ Table.include( /** @lends Table.prototype */{
         this._rowNum += newDataset.length;
         this.fire('addrow', this);
         this.fire('orderchanged', this);
+        this.fire('heightchanged', this);
         return this;
     },
     moveRow: function moveRow(sourceRowNum, direction) {
@@ -2038,6 +2044,7 @@ Table.include( /** @lends Table.prototype */{
         this._rowNum -= 1;
         this.fire('removerow', this);
         this.fire('orderchanged', this);
+        this.fire('heightchanged', this);
     },
     getRowsNum: function getRowsNum() {
         return this._rowNum;
@@ -2085,7 +2092,7 @@ Table.include( /** @lends Table.prototype */{
         var eventParam = {};
         eventParam['target'] = this;
         eventParam['row'] = rowNum;
-        eventParam['heightOffset'] = heightOffset;
+        eventParam['heightOffset'] = new maptalks.Point(0, heightOffset);
         this.fire('heightchanged', eventParam);
     },
     _createRow: function _createRow(index, item, add) {
@@ -2297,12 +2304,17 @@ Table.include( /** @lends Table.prototype */{
         this._linkTarget = target;
         this._moveToNewCoordinates();
         this._addLinkEvent();
+        this._autoAdjustColumnWidth();
+        this.config('draggable', false);
+        this.config('adjustable', 'y');
     },
     unLink: function unLink() {
         if (!this._linkTarget) return;
         this._removeLinkEvent();
         this._linkTarget.clearLinker();
         delete this._linkTarget;
+        this.config('draggable', true);
+        this.config('adjustable', true);
     },
     clearLinker: function clearLinker() {
         this._linker = null;
@@ -2316,6 +2328,26 @@ Table.include( /** @lends Table.prototype */{
     getLinker: function getLinker() {
         return this._linker;
     },
+    _autoAdjustColumnWidth: function _autoAdjustColumnWidth() {
+        var target = this._linkTarget;
+        var columnNum = target.getColumnNum();
+        for (var i = 0; i < columnNum; i++) {
+            var targetWidth = target.getColumnWidth(i);
+            var width = this.getColumnWidth(i);
+            if (width) {
+                var param = {
+                    'columnNum': i,
+                    'widthOffset': new maptalks.Point(targetWidth - width, 0)
+                };
+                this._adjustColumnWidth(param);
+            }
+        }
+    },
+    _adjustColumnWidth: function _adjustColumnWidth(eventParam) {
+        var columnNum = eventParam['columnNum'];
+        var widthOffset = eventParam['widthOffset'];
+        this._resizeCol(columnNum, widthOffset);
+    },
     _moveToNewCoordinates: function _moveToNewCoordinates() {
         var map = this.getMap();
         var targetTableCoordinate = this._linkTarget.getCoordinates(),
@@ -2325,27 +2357,24 @@ Table.include( /** @lends Table.prototype */{
         this.setCoordinates(targetCoordinate);
         this.show();
     },
-    _adjustColumnWidth: function _adjustColumnWidth(eventParam) {
-        var columnNum = eventParam['columnNum'];
-        var widthOffset = eventParam['widthOffset'];
-        this._resizeCol(columnNum, new maptalks.Point(widthOffset, 0));
-    },
     _addLinkEvent: function _addLinkEvent() {
         var target = this._linkTarget;
         if (!target) return;
         target.on('dragstart', this.hide, this);
+        target.on('hide', this.hide, this);
         target.on('dragend', this._moveToNewCoordinates, this);
         target.on('remove', this.unLink, this);
-        target.on('heightchanged', this._moveToNewCoordinates, this);
+        target.on('heightchanged positonchanged', this._moveToNewCoordinates, this);
         target.on('widthchanged', this._adjustColumnWidth, this);
     },
     _removeLinkEvent: function _removeLinkEvent() {
         var target = this._linkTarget;
         if (!target) return;
         target.off('dragstart', this.hide, this);
+        target.off('hide', this.hide, this);
         target.off('dragend', this._moveToNewCoordinates, this);
         target.off('remove', this.unLink, this);
-        target.off('heightchanged', this._moveToNewCoordinates, this);
+        target.off('heightchanged positonchanged', this._moveToNewCoordinates, this);
         target.off('widthchanged', this._adjustColumnWidth, this);
     }
 });
@@ -2362,6 +2391,7 @@ Table.include( /** @lends Table.prototype */{
     * Prepare to adjust
     */
     prepareAdjust: function prepareAdjust() {
+        if (!this.options['adjustable']) return;
         if (!this.getMap()) return;
         if (!this.options['header']) return;
         // if(this._adjustLayer && this._topLines.length > 0) return;
@@ -2381,8 +2411,14 @@ Table.include( /** @lends Table.prototype */{
             this._clearAdjustLayer();
             this._adjustLayer.bringToFront();
         }
-        this._topLines = this._createTopHandleLine(startViewPoint);
-        this._bottomLines = this._createBottomHandleLine(startViewPoint);
+        if (this.options['adjustable'] === 'x') {
+            this._topLines = this._createTopHandleLine(startViewPoint);
+        } else if (this.options['adjustable'] === 'y') {
+            this._bottomLines = this._createBottomHandleLine(startViewPoint);
+        } else {
+            this._topLines = this._createTopHandleLine(startViewPoint);
+            this._bottomLines = this._createBottomHandleLine(startViewPoint);
+        }
     },
     _createTopHandleLine: function _createTopHandleLine(startViewPoint) {
         var _this = this;

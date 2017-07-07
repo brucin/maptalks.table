@@ -40,6 +40,7 @@ Table.include(/** @lends Table.prototype */{
         this._rowNum += newDataset.length;
         this.fire('addrow', this);
         this.fire('orderchanged', this);
+        this.fire('heightchanged', this);
         return this;
     },
 
@@ -138,6 +139,7 @@ Table.include(/** @lends Table.prototype */{
         this._rowNum -= 1;
         this.fire('removerow', this);
         this.fire('orderchanged', this);
+        this.fire('heightchanged', this);
     },
 
     getRowsNum() {
@@ -188,7 +190,7 @@ Table.include(/** @lends Table.prototype */{
         let eventParam = {};
         eventParam['target'] = this;
         eventParam['row'] = rowNum;
-        eventParam['heightOffset'] = heightOffset;
+        eventParam['heightOffset'] = new maptalks.Point(0, heightOffset);
         this.fire('heightchanged', eventParam);
     },
 

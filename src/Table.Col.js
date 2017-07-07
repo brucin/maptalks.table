@@ -140,12 +140,11 @@ Table.include(/** @lends Table.prototype */{
         let eventParam = {};
         eventParam['target'] = this;
         eventParam['columnNum'] = colNum;
-        eventParam['widthOffset'] = widthOffset;
+        eventParam['widthOffset'] = new maptalks.Point(widthOffset,0);
         this.fire('widthchanged', eventParam);
     },
 
     _createCol(insertColNum, data, add) {
-        // this.removeStretchLine();
         let startCol = insertColNum;//调整起始列
         if (!data || data.length === 0) data = '';
         //insert column

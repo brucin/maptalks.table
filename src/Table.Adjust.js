@@ -12,6 +12,7 @@ Table.include(/** @lends Table.prototype */{
     * Prepare to adjust
     */
     prepareAdjust() {
+        if(!this.options['adjustable'])return;
         if(!this.getMap()) return;
         if(!this.options['header']) return;
         // if(this._adjustLayer && this._topLines.length > 0) return;
@@ -31,8 +32,14 @@ Table.include(/** @lends Table.prototype */{
             this._clearAdjustLayer();
             this._adjustLayer.bringToFront();
         }
-        this._topLines = this._createTopHandleLine(startViewPoint);
-        this._bottomLines = this._createBottomHandleLine(startViewPoint);
+        if(this.options['adjustable'] === 'x') {    
+            this._topLines = this._createTopHandleLine(startViewPoint);
+        } else if (this.options['adjustable'] === 'y') {
+            this._bottomLines = this._createBottomHandleLine(startViewPoint);
+        } else {
+            this._topLines = this._createTopHandleLine(startViewPoint);
+            this._bottomLines = this._createBottomHandleLine(startViewPoint);
+        }
     },
 
     _createTopHandleLine(startViewPoint) {

@@ -34,6 +34,7 @@ const defaultOptions = {
     'width': 300,
     'height': 300,
     'draggable': true,
+    'adjustable' : true,
     'editable': true,
     'header': true,
     'order': true,
@@ -97,6 +98,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         'width': 300,
         'height': 300,
         'draggable': true,
+        'adjustable': true,
         'editable': true,
         'header': true,
         'order': true,
@@ -114,6 +116,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         if (!this.options['order'] && this.options['order'] !== false) this.options['order'] = true;
         this.options['visible'] = true;
         this.options['editing'] = false;
+        this.options['adjustable'] = this.options['adjustable'] || true;
         this.options['showOrderNumber'] = true;
         this.options['startNum'] = this.options['startNum'] || 1;
         if (!this.options['data'] && this.options['data'].length === 0)  { throw new Error(EXCEPTION_DEFS['NEED_DATA']); }
@@ -441,7 +444,6 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
                 row[j].hide();
             }
         }
-        // this.removeStretchLine();
         this.fire('hide', this);
         this.options['visible'] = false;
     }
@@ -663,6 +665,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         let coorObj = new maptalks.Coordinate(coordinate.x, coordinate.y);
         let offset = coorObj.substract(this.getCenter());
         this._translate(offset);
+        this.fire('positonchanged', this);
     }
 
     _addToLayer(tableRow, init) {
@@ -730,19 +733,22 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         }
     }
 
-    _dragTableStart() {
-        this.fire('dragstart', { 'target':this });
-    }
+    // _dragTableStart() {
+    //     this.fire('dragstart', { 'target':this });
+    //     this.fire('movestart', { 'target':this });
+    // }
 
-    _dragTableEnd() {
-        this.fire('dragend', { 'target':this });
-    }
+    // _dragTableEnd() {
+    //     this.fire('dragend', { 'target':this });
+    //     this.fire('moveend', { 'target':this });
+    // }
 
-    _dragTable() {
-        let coordOffset = event['coordOffset'];
-        this._translate(coordOffset);
-        this.fire('moving dragging', { 'target' : this });
-    }
+    // _dragTable() {
+    //     let coordOffset = event['coordOffset'];
+    //     this._translate(coordOffset);
+    //     this.fire('dragging', { 'target' : this });
+    //     this.fire('moving', { 'target' : this });
+    // }
 
     _translate(offset) {
         let row, cell;
