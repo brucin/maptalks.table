@@ -373,8 +373,11 @@ var Table = function (_maptalks$JSONAble) {
         this._layer = layer;
         this._tableRows = this.createTable();
         this._addToLayer(this._tableRows, true);
-        // this.addStretchLine();
         this._addEventsToTable();
+        //
+        if (this.options['hideHeader']) {
+            this.hideHeader();
+        }
     };
 
     Table.prototype._addEventsToTable = function _addEventsToTable() {
@@ -509,8 +512,12 @@ var Table = function (_maptalks$JSONAble) {
     };
 
     Table.prototype.hide = function hide() {
-        var row;
-        for (var i = 0, len = this._tableRows.length; i < len; i++) {
+        var row = void 0,
+            start = 0;
+        if (this.options['hideHeader']) {
+            start = 1;
+        }
+        for (var i = start, len = this._tableRows.length; i < len; i++) {
             row = this._tableRows[i];
             if (!row) return;
             for (var j = 0, rowLength = row.length; j < rowLength; j++) {
@@ -525,8 +532,12 @@ var Table = function (_maptalks$JSONAble) {
     };
 
     Table.prototype.show = function show() {
-        var row;
-        for (var i = 0, len = this._tableRows.length; i < len; i++) {
+        var row = void 0,
+            start = 0;
+        if (this.options['hideHeader']) {
+            start = 1;
+        }
+        for (var i = start, len = this._tableRows.length; i < len; i++) {
             row = this._tableRows[i];
             if (!row) return;
             for (var j = 0, rowLength = row.length; j < rowLength; j++) {
@@ -811,23 +822,6 @@ var Table = function (_maptalks$JSONAble) {
             cell.setContent(newValues[_i5]);
         }
     };
-
-    // _dragTableStart() {
-    //     this.fire('dragstart', { 'target':this });
-    //     this.fire('movestart', { 'target':this });
-    // }
-
-    // _dragTableEnd() {
-    //     this.fire('dragend', { 'target':this });
-    //     this.fire('moveend', { 'target':this });
-    // }
-
-    // _dragTable() {
-    //     let coordOffset = event['coordOffset'];
-    //     this._translate(coordOffset);
-    //     this.fire('dragging', { 'target' : this });
-    //     this.fire('moving', { 'target' : this });
-    // }
 
     Table.prototype._translate = function _translate(offset) {
         var row = void 0,
@@ -1518,10 +1512,6 @@ Table.include( /** @lends Table.prototype */{
         if (sourceColNum === targetColNum) {
             return;
         }
-        // let start = 0;
-        // if (this.options['header']) {
-        //     start = -1;
-        // }
         var firstRow = this._tableRows[0];
         var firstSourceCell = firstRow[sourceColNum];
         var sourceCellRow = firstSourceCell._row;
@@ -1878,7 +1868,6 @@ Table.include( /** @lends Table.prototype */{
 });
 
 Table.include( /** @lends Table.prototype */{
-
     createHeader: function createHeader() {
         var headerRow = [];
         var cellOffset = void 0,
@@ -1899,8 +1888,15 @@ Table.include( /** @lends Table.prototype */{
             headerRow.push(cell);
         }
         return headerRow;
+    },
+    hideHeader: function hideHeader() {
+        this.showOrHideRow(0, false);
+        this.config('hideHeader', true);
+    },
+    showHeader: function showHeader() {
+        this.showOrHideRow(0, true);
+        this.config('showHeader', false);
     }
-
 });
 
 Table.include( /** @lends Table.prototype */{
@@ -1992,6 +1988,48 @@ Table.include( /** @lends Table.prototype */{
 
 
     /**
+     * show/hide row
+     * @param {Number} rowNum 行号
+     * @param {Boolean} show 显示
+     */
+    showOrHideRow: function showOrHideRow(rowNum, show) {
+        this.stopEditTable();
+        var targetRow = this._tableRows[rowNum];
+        var firstCell = targetRow[0];
+        var size = firstCell.getSize();
+        var row = void 0,
+            cell = void 0,
+            step = 1;
+        if (show) {
+            step = -1;
+        }
+        for (var i = rowNum, len = this._tableRows.length; i < len; i++) {
+            row = this._tableRows[i];
+            if (!row) return;
+            for (var j = 0, rowLength = row.length; j < rowLength; j++) {
+                cell = row[j];
+                if (i > rowNum) {
+                    this._translateDy(cell, -size['height'] * step);
+                } else {
+                    if (show) {
+                        cell.show();
+                    } else {
+                        cell.hide();
+                    }
+                }
+            }
+        }
+        this.tableHeight -= size['height'] * step;
+        if (show) {
+            this.fire('showrow', this);
+        } else {
+            this.fire('hiderow', this);
+        }
+        this.fire('heightchanged', this);
+    },
+
+
+    /**
      * remove row
      * @param {Number} rowNum 行号
      */
@@ -2017,13 +2055,13 @@ Table.include( /** @lends Table.prototype */{
                         }
                         cell._row -= 1;
                     }
-                    this._translateDy(cell, -size['height'] + 1);
+                    this._translateDy(cell, -size['height']);
                 } else {
                     cell.remove();
                 }
             }
         }
-        this.tableHeight -= size['height'] + 1;
+        this.tableHeight -= size['height'];
         //移除行数据
         this._tableRows.splice(rowNum, 1);
         this._rowHeights.splice(rowNum, 1);
@@ -2302,6 +2340,7 @@ Table.include( /** @lends Table.prototype */{
         if (target.getColumnNum() !== this.getColumnNum()) return;
         target.addLinker(this);
         this._linkTarget = target;
+        this.hideHeader();
         this._moveToNewCoordinates();
         this._addLinkEvent();
         this._autoAdjustColumnWidth();
@@ -2313,6 +2352,7 @@ Table.include( /** @lends Table.prototype */{
         this._removeLinkEvent();
         this._linkTarget.clearLinker();
         delete this._linkTarget;
+        this.showHeader();
         this.config('draggable', true);
         this.config('adjustable', true);
     },
@@ -2393,8 +2433,6 @@ Table.include( /** @lends Table.prototype */{
     prepareAdjust: function prepareAdjust() {
         if (!this.options['adjustable']) return;
         if (!this.getMap()) return;
-        if (!this.options['header']) return;
-        // if(this._adjustLayer && this._topLines.length > 0) return;
         this._prepareEditLayer();
         this._bindTableEvent();
     },
@@ -2625,7 +2663,7 @@ Table.include( /** @lends Table.prototype */{
         });
     },
     _clearAdjustLayer: function _clearAdjustLayer() {
-        this._adjustLayer.clear();
+        if (this._adjustLayer) this._adjustLayer.clear();
     },
     _removeTopLines: function _removeTopLines() {
         this._adjustLayer.removeGeometry(this._topLines);

@@ -222,10 +222,6 @@ Table.include(/** @lends Table.prototype */{
 
     _changeColOrder(sourceColNum, targetColNum) {
         if (sourceColNum === targetColNum) { return; }
-        // let start = 0;
-        // if (this.options['header']) {
-        //     start = -1;
-        // }
         let firstRow = this._tableRows[0];
         let firstSourceCell = firstRow[sourceColNum];
         let sourceCellRow = firstSourceCell._row;

@@ -8,6 +8,7 @@ Table.include(/** @lends Table.prototype */{
         if(target.getColumnNum() !== this.getColumnNum()) return;
         target.addLinker(this);
         this._linkTarget = target;
+        this.hideHeader();
         this._moveToNewCoordinates();
         this._addLinkEvent();
         this._autoAdjustColumnWidth();
@@ -20,6 +21,7 @@ Table.include(/** @lends Table.prototype */{
         this._removeLinkEvent();
         this._linkTarget.clearLinker();
         delete this._linkTarget;
+        this.showHeader();
         this.config('draggable', true);
         this.config('adjustable', true);
     },

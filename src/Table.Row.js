@@ -87,6 +87,46 @@ Table.include(/** @lends Table.prototype */{
         }
     },
 
+
+  /**
+   * show/hide row
+   * @param {Number} rowNum 行号
+   * @param {Boolean} show 显示
+   */
+    showOrHideRow(rowNum, show) {
+        this.stopEditTable();
+        let targetRow = this._tableRows[rowNum];
+        let firstCell = targetRow[0];
+        let size = firstCell.getSize();
+        let row, cell, step = 1;
+        if(show) {
+            step = -1;
+        }
+        for (let i = rowNum, len = this._tableRows.length; i < len; i++) {
+            row = this._tableRows[i];
+            if (!row) return;
+            for (let j = 0, rowLength = row.length; j < rowLength; j++) {
+                cell = row[j];
+                if (i > rowNum) {
+                    this._translateDy(cell, -size['height']*step);
+                } else {
+                    if(show) {
+                        cell.show();
+                    } else {
+                        cell.hide();
+                    }
+                }
+            }
+        }
+        this.tableHeight -= (size['height'])*step;
+        if(show) {
+            this.fire('showrow', this);
+        } else {
+            this.fire('hiderow', this);
+        }
+        this.fire('heightchanged', this);
+    },
+
   /**
    * remove row
    * @param {Number} rowNum 行号
@@ -112,13 +152,13 @@ Table.include(/** @lends Table.prototype */{
                         }
                         cell._row -= 1;
                     }
-                    this._translateDy(cell, -size['height'] + 1);
+                    this._translateDy(cell, -size['height']);
                 } else {
                     cell.remove();
                 }
             }
         }
-        this.tableHeight -= (size['height'] + 1);
+        this.tableHeight -= size['height'];
         //移除行数据
         this._tableRows.splice(rowNum, 1);
         this._rowHeights.splice(rowNum, 1);

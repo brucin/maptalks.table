@@ -12,10 +12,8 @@ Table.include(/** @lends Table.prototype */{
     * Prepare to adjust
     */
     prepareAdjust() {
-        if(!this.options['adjustable'])return;
+        if(!this.options['adjustable']) return;
         if(!this.getMap()) return;
-        if(!this.options['header']) return;
-        // if(this._adjustLayer && this._topLines.length > 0) return;
         this._prepareEditLayer();
         this._bindTableEvent();
     },
@@ -238,7 +236,7 @@ Table.include(/** @lends Table.prototype */{
     },
 
     _clearAdjustLayer() {
-        this._adjustLayer.clear();
+        if(this._adjustLayer) this._adjustLayer.clear();
     },
 
     _removeTopLines() {

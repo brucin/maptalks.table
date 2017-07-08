@@ -2,7 +2,7 @@ import Table from './Table';
 
 Table.include(/** @lends Table.prototype */{
 
-    createHeader: function () {
+    createHeader() {
         let headerRow = [];
         let cellOffset, col, text, size, cell;
         for (let i = 0, len = this._columns.length; i < len; i++) {
@@ -18,6 +18,17 @@ Table.include(/** @lends Table.prototype */{
             headerRow.push(cell);
         }
         return headerRow;
+    },
+
+    hideHeader() {
+        this.showOrHideRow(0, false);
+        this.config('hideHeader', true);
+
+    },
+
+    showHeader() {
+        this.showOrHideRow(0, true);
+        this.config('showHeader', false);
     }
 
 });

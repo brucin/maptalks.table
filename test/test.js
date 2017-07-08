@@ -467,7 +467,21 @@ describe('Table', function () {
             targetTable.remove();
             linker.remove();
         });
+    });
 
 
+
+    describe('Header', function () {
+        it('hide Header', function () {
+            let table = new maptalks.Table(tableOptions);
+            table.addTo(layer);
+            let tableHeight = table.getTableHeight();
+            let headerHeight = table.getRowHeight(0);
+            table.hideHeader();
+            expect(table.getTableHeight()).to.be.equal(tableHeight-headerHeight);
+            table.showHeader();
+            expect(table.getTableHeight()).to.be.equal(tableHeight);
+            table.remove();
+        });
     });
 });

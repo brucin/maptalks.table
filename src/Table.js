@@ -294,8 +294,11 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         this._layer = layer;
         this._tableRows = this.createTable();
         this._addToLayer(this._tableRows, true);
-        // this.addStretchLine();
         this._addEventsToTable();
+        //
+        if(this.options['hideHeader']) {
+            this.hideHeader();
+        }
     }
 
     _addEventsToTable() {
@@ -433,11 +436,14 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
     }
 
     hide() {
-        var row;
-        for (var i = 0, len = this._tableRows.length; i < len; i++) {
+        let row, start = 0;
+        if(this.options['hideHeader']) {
+            start = 1;
+        }
+        for (let i = start, len = this._tableRows.length; i < len; i++) {
             row = this._tableRows[i];
             if (!row) return;
-            for (var j = 0, rowLength = row.length; j < rowLength; j++) {
+            for (let j = 0, rowLength = row.length; j < rowLength; j++) {
                 if (row[j].isEditingText()) {
                     row[j].endEditText();
                 }
@@ -449,11 +455,14 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
     }
 
     show() {
-        var row;
-        for (var i = 0, len = this._tableRows.length; i < len; i++) {
+        let row, start = 0;
+        if(this.options['hideHeader']) {
+            start = 1;
+        }
+        for (let i = start, len = this._tableRows.length; i < len; i++) {
             row = this._tableRows[i];
             if (!row) return;
-            for (var j = 0, rowLength = row.length; j < rowLength; j++) {
+            for (let j = 0, rowLength = row.length; j < rowLength; j++) {
                 row[j].show();
             }
         }
@@ -732,23 +741,6 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
             cell.setContent(newValues[i]);
         }
     }
-
-    // _dragTableStart() {
-    //     this.fire('dragstart', { 'target':this });
-    //     this.fire('movestart', { 'target':this });
-    // }
-
-    // _dragTableEnd() {
-    //     this.fire('dragend', { 'target':this });
-    //     this.fire('moveend', { 'target':this });
-    // }
-
-    // _dragTable() {
-    //     let coordOffset = event['coordOffset'];
-    //     this._translate(coordOffset);
-    //     this.fire('dragging', { 'target' : this });
-    //     this.fire('moving', { 'target' : this });
-    // }
 
     _translate(offset) {
         let row, cell;
