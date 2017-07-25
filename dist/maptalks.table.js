@@ -81,7 +81,8 @@ var defaultOptions = {
         'textFaceName': 'monospace',
         'textSize': 12,
         'textFill': '#ebf2f9',
-        'textWrapWidth': 100
+        'textWrapWidth': 100,
+        'textPadding': { 'width': 8, 'height': 8 }
     },
     'symbol': {
         'lineColor': '#ffffff',
@@ -89,7 +90,8 @@ var defaultOptions = {
         'textFaceName': 'monospace',
         'textSize': 12,
         'textFill': '#ebf2f9',
-        'textWrapWidth': 100
+        'textWrapWidth': 100,
+        'textPadding': { 'width': 8, 'height': 8 }
     },
     'position': {
         'x': 121.489935,
@@ -255,7 +257,7 @@ var Table = function (_maptalks$JSONAble) {
             'colWidths': this._colWidths,
             'tableWidth': this.tableWidth,
             'tableHeight': this.tableHeight,
-            'tableSymbols': this.tableSymbols
+            'tableSymbols': this._getTableSymbols()
         };
     };
 
@@ -451,10 +453,9 @@ var Table = function (_maptalks$JSONAble) {
             var style = this.getCellSymbol(0, i);
             var font = maptalks.StringUtil.getFont(style);
             var size = maptalks.StringUtil.stringLength(header, font);
-            this._colWidths[i] = size['width'];
-            if (this._rowHeights[0] < size['height']) {
-                this._rowHeights[0] = size['height'];
-            }
+            var textPadding = style['textPadding'];
+            this._colWidths[i] = size['width'] + textPadding['width'] * 2;
+            this._rowHeights[0] = size['height'] + textPadding['height'] * 2;
         }
     };
 
@@ -471,21 +472,25 @@ var Table = function (_maptalks$JSONAble) {
                 var maxWidth = col.maxWidth || this._cellWidth,
                     width = 0;
                 var style = this.getCellSymbol(i + start, j);
+                var textPadding = style['textPadding'],
+                    padding = 0;
                 var font = maptalks.StringUtil.getFont(style);
                 var size = maptalks.StringUtil.stringLength(content, font);
                 if (size['width'] >= maxWidth) {
                     width = maxWidth;
+                    padding = textPadding['width'];
                 } else if (size['width'] <= this._colWidths[j]) {
                     width = this._colWidths[j];
                 } else {
                     width = size['width'];
+                    padding = textPadding['width'];
                 }
-                style['textWrapWidth'] = width;
+                style['textWrapWidth'] = width + padding;
                 this._colWidths[j] = width;
                 var result = maptalks.StringUtil.splitTextToRow(content, style);
                 var rowSize = result['size'];
                 if (this._rowHeights[i + start] < rowSize['height']) {
-                    this._rowHeights[i + start] = rowSize['height'];
+                    this._rowHeights[i + start] = rowSize['height'] + textPadding['height'] * 2;
                 }
             }
         }
@@ -505,6 +510,19 @@ var Table = function (_maptalks$JSONAble) {
                 for (var _j = 0; _j < this._colNum; _j++) {
                     defaultSymbol['textWrapWidth'] = this._colWidths[_j];
                     tableSymbols[i + '_' + _j] = defaultSymbol;
+                }
+            }
+        }
+        return tableSymbols;
+    };
+
+    Table.prototype._getTableSymbols = function _getTableSymbols() {
+        var tableSymbols = {};
+        for (var i = 0; i < this._tableRows.length; i++) {
+            var row = this._tableRows[i];
+            if (row) {
+                for (var j = 0, rowLength = row.length; j < rowLength; j++) {
+                    tableSymbols[i + '_' + j] = row[j].getSymbol();
                 }
             }
         }
@@ -1007,14 +1025,15 @@ Table.include( /** @lends Table.prototype */{
     createCell: function createCell(content, cellOffset, size, symbol) {
         var textSize = symbol['textSize'] || 12;
         var textLineSpacing = symbol['textLineSpacing'] || 8;
+        var boxPadding = symbol['textPadding'] || { 'width': 8, 'height': 8 };
         content = this._filterContent(content);
         var options = {
             'symbol': {
-                'markerLineColor': symbol['lineColor'] || '#ffffff',
+                'markerLineColor': symbol['lineColor'] || symbol['markerLineColor'] || '#ffffff',
                 'markerLineWidth': 1,
                 'markerLineOpacity': 0.9,
                 'markerLineDasharray': null,
-                'markerFill': symbol['fill'] || '#4e98dd',
+                'markerFill': symbol['fill'] || symbol['markerFill'] || '#4e98dd',
                 'markerFillOpacity': 0.9,
                 'markerDx': cellOffset['dx'] || 0,
                 'markerDy': cellOffset['dy'] || 0,
@@ -1034,7 +1053,7 @@ Table.include( /** @lends Table.prototype */{
                 'textDx': cellOffset['dx'] || 0,
                 'textDy': cellOffset['dy'] || 0
             },
-            'boxPadding': { 'width': 15, 'height': 8 },
+            'boxPadding': boxPadding,
             'draggable': false,
             'boxAutoSize': false,
             'boxMinWidth': size['width'],
@@ -1074,8 +1093,11 @@ Table.include( /** @lends Table.prototype */{
                 if (!symbol['textLineSpacing']) {
                     symbol['textLineSpacing'] = defaultSymbol['textLineSpacing'];
                 }
-                return symbol;
+                defaultSymbol = symbol;
             }
+        }
+        if (!defaultSymbol['textPadding']) {
+            defaultSymbol['textPadding'] = { 'width': 8, 'height': 8 };
         }
         return defaultSymbol;
     },
@@ -1994,14 +2016,12 @@ Table.include( /** @lends Table.prototype */{
      */
     showOrHideRow: function showOrHideRow(rowNum, show) {
         this.stopEditTable();
-        var targetRow = this._tableRows[rowNum];
-        var firstCell = targetRow[0];
-        var size = firstCell.getSize();
         var row = void 0,
             cell = void 0,
             step = 1;
+        var height = this.getRowHeight(rowNum);
         if (show) {
-            step = -1;
+            height *= -1;
         }
         for (var i = rowNum, len = this._tableRows.length; i < len; i++) {
             row = this._tableRows[i];
@@ -2009,7 +2029,7 @@ Table.include( /** @lends Table.prototype */{
             for (var j = 0, rowLength = row.length; j < rowLength; j++) {
                 cell = row[j];
                 if (i > rowNum) {
-                    this._translateDy(cell, -size['height'] * step);
+                    this._translateDy(cell, -height);
                 } else {
                     if (show) {
                         cell.show();
@@ -2019,7 +2039,7 @@ Table.include( /** @lends Table.prototype */{
                 }
             }
         }
-        this.tableHeight -= size['height'] * step;
+        this.tableHeight -= height;
         if (show) {
             this.fire('showrow', this);
         } else {
@@ -2035,9 +2055,7 @@ Table.include( /** @lends Table.prototype */{
      */
     removeRow: function removeRow(rowNum) {
         this.stopEditTable();
-        var removeRow = this._tableRows[rowNum];
-        var firstCell = removeRow[0];
-        var size = firstCell.getSize();
+        var height = this.getRowHeight(rowNum);
         var row = void 0,
             cell = void 0;
         for (var i = rowNum, len = this._tableRows.length; i < len; i++) {
@@ -2055,13 +2073,13 @@ Table.include( /** @lends Table.prototype */{
                         }
                         cell._row -= 1;
                     }
-                    this._translateDy(cell, -size['height']);
+                    this._translateDy(cell, -height);
                 } else {
                     cell.remove();
                 }
             }
         }
-        this.tableHeight -= size['height'];
+        this.tableHeight -= height;
         //移除行数据
         this._tableRows.splice(rowNum, 1);
         this._rowHeights.splice(rowNum, 1);

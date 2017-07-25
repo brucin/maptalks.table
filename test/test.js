@@ -478,7 +478,7 @@ describe('Table', function () {
             let tableHeight = table.getTableHeight();
             let headerHeight = table.getRowHeight(0);
             table.hideHeader();
-            expect(table.getTableHeight()).to.be.equal(tableHeight-headerHeight);
+            expect(table.getTableHeight()).to.be.equal(tableHeight - headerHeight);
             table.showHeader();
             expect(table.getTableHeight()).to.be.equal(tableHeight);
             table.remove();

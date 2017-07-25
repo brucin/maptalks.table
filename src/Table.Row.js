@@ -95,12 +95,10 @@ Table.include(/** @lends Table.prototype */{
    */
     showOrHideRow(rowNum, show) {
         this.stopEditTable();
-        let targetRow = this._tableRows[rowNum];
-        let firstCell = targetRow[0];
-        let size = firstCell.getSize();
         let row, cell, step = 1;
+        let height = this.getRowHeight(rowNum);
         if(show) {
-            step = -1;
+            height *= -1;
         }
         for (let i = rowNum, len = this._tableRows.length; i < len; i++) {
             row = this._tableRows[i];
@@ -108,7 +106,7 @@ Table.include(/** @lends Table.prototype */{
             for (let j = 0, rowLength = row.length; j < rowLength; j++) {
                 cell = row[j];
                 if (i > rowNum) {
-                    this._translateDy(cell, -size['height']*step);
+                    this._translateDy(cell, -height);
                 } else {
                     if(show) {
                         cell.show();
@@ -118,7 +116,7 @@ Table.include(/** @lends Table.prototype */{
                 }
             }
         }
-        this.tableHeight -= (size['height'])*step;
+        this.tableHeight -= height;
         if(show) {
             this.fire('showrow', this);
         } else {
@@ -133,9 +131,7 @@ Table.include(/** @lends Table.prototype */{
    */
     removeRow(rowNum) {
         this.stopEditTable();
-        let removeRow = this._tableRows[rowNum];
-        let firstCell = removeRow[0];
-        let size = firstCell.getSize();
+        let height = this.getRowHeight(rowNum);
         let row, cell;
         for (let i = rowNum, len = this._tableRows.length; i < len; i++) {
             row = this._tableRows[i];
@@ -152,13 +148,13 @@ Table.include(/** @lends Table.prototype */{
                         }
                         cell._row -= 1;
                     }
-                    this._translateDy(cell, -size['height']);
+                    this._translateDy(cell, -height);
                 } else {
                     cell.remove();
                 }
             }
         }
-        this.tableHeight -= size['height'];
+        this.tableHeight -= height;
         //移除行数据
         this._tableRows.splice(rowNum, 1);
         this._rowHeights.splice(rowNum, 1);

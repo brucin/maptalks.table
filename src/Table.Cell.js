@@ -5,14 +5,15 @@ Table.include(/** @lends Table.prototype */{
     createCell: function (content, cellOffset, size, symbol) {
         let textSize = symbol['textSize'] || 12;
         let textLineSpacing = symbol['textLineSpacing'] || 8;
+        let boxPadding = symbol['textPadding'] || { 'width' : 8, 'height' : 8 };
         content = this._filterContent(content);
         let options = {
             'symbol': {
-                'markerLineColor': symbol['lineColor'] || '#ffffff',
+                'markerLineColor': symbol['lineColor'] || symbol['markerLineColor'] || '#ffffff',
                 'markerLineWidth': 1,
                 'markerLineOpacity': 0.9,
                 'markerLineDasharray': null,
-                'markerFill': symbol['fill'] || '#4e98dd',
+                'markerFill': symbol['fill'] ||  symbol['markerFill']  || '#4e98dd',
                 'markerFillOpacity': 0.9,
                 'markerDx': cellOffset['dx'] || 0,
                 'markerDy': cellOffset['dy'] || 0,
@@ -32,7 +33,7 @@ Table.include(/** @lends Table.prototype */{
                 'textDx': cellOffset['dx'] || 0,
                 'textDy': cellOffset['dy'] || 0
             },
-            'boxPadding'   :   { 'width' : 15, 'height' : 8 },
+            'boxPadding'   :   boxPadding,
             'draggable': false,
             'boxAutoSize': false,
             'boxMinWidth': size['width'],
@@ -71,8 +72,11 @@ Table.include(/** @lends Table.prototype */{
                 if (!symbol['textLineSpacing']) {
                     symbol['textLineSpacing'] = defaultSymbol['textLineSpacing'];
                 }
-                return symbol;
+                defaultSymbol =  symbol;
             }
+        }
+        if(!defaultSymbol['textPadding']) {
+            defaultSymbol['textPadding'] = { 'width' : 8, 'height' : 8 };
         }
         return defaultSymbol;
     },
