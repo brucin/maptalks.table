@@ -3,9 +3,9 @@ import Table from './Table';
 Table.include(/** @lends Table.prototype */{
 
     linkTo(target) {
-        if(!target instanceof maptalks.Table) return;
-        if(target.getLinker()) return;
-        if(target.getColumnNum() !== this.getColumnNum()) return;
+        if (!(target instanceof maptalks.Table)) return;
+        if (target.getLinker()) return;
+        if (target.getColumnNum() !== this.getColumnNum()) return;
         target.addLinker(this);
         this._linkTarget = target;
         this.hideHeader();
@@ -17,7 +17,7 @@ Table.include(/** @lends Table.prototype */{
     },
 
     unLink() {
-        if(!this._linkTarget) return;
+        if (!this._linkTarget) return;
         this._removeLinkEvent();
         this._linkTarget.clearLinker();
         delete this._linkTarget;
@@ -32,8 +32,8 @@ Table.include(/** @lends Table.prototype */{
     },
 
     addLinker(linker) {
-        if(linker instanceof maptalks.Table) return;
-        if(this._linker) return;
+        if (linker instanceof maptalks.Table) return;
+        if (this._linker) return;
         this._linker = linker;
     },
 
@@ -47,11 +47,11 @@ Table.include(/** @lends Table.prototype */{
         for (var i = 0; i < columnNum; i++) {
             let targetWidth = target.getColumnWidth(i);
             let width = this.getColumnWidth(i);
-            if(width) {
+            if (width) {
                 let param = {
                     'columnNum' : i,
                     'widthOffset' : new maptalks.Point(targetWidth - width, 0)
-                }
+                };
                 this._adjustColumnWidth(param);
             }
         }
@@ -65,7 +65,7 @@ Table.include(/** @lends Table.prototype */{
 
     _moveToNewCoordinates() {
         let map = this.getMap();
-        let targetTableCoordinate = this._linkTarget.getCoordinates(),targetViewPoint = map.coordinateToViewPoint(targetTableCoordinate);
+        let targetTableCoordinate = this._linkTarget.getCoordinates(), targetViewPoint = map.coordinateToViewPoint(targetTableCoordinate);
         let tableHeight = this._linkTarget.getTableHeight();
         let targetCoordinate = map.viewPointToCoordinate(targetViewPoint.add(new maptalks.Point(0, tableHeight)));
         this.setCoordinates(targetCoordinate);
@@ -74,7 +74,7 @@ Table.include(/** @lends Table.prototype */{
 
     _addLinkEvent() {
         let target = this._linkTarget;
-        if(!target) return;
+        if (!target) return;
         target.on('dragstart', this.hide, this);
         target.on('hide', this.hide, this);
         target.on('dragend', this._moveToNewCoordinates, this);
@@ -85,7 +85,7 @@ Table.include(/** @lends Table.prototype */{
 
     _removeLinkEvent() {
         let target = this._linkTarget;
-        if(!target) return;
+        if (!target) return;
         target.off('dragstart', this.hide, this);
         target.off('hide', this.hide, this);
         target.off('dragend', this._moveToNewCoordinates, this);

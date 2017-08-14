@@ -3,11 +3,14 @@
  * LICENSE : MIT
  * (c) 2016-2017 maptalks.org
  */
+/*!
+ * requires maptalks@<2.0.0 
+ */
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('maptalks')) :
-	typeof define === 'function' && define.amd ? define(['exports', 'maptalks'], factory) :
-	(factory((global.maptalks = global.maptalks || {}),global.maptalks$1));
-}(this, (function (exports,maptalks$1) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+	typeof define === 'function' && define.amd ? define(['exports'], factory) :
+	(factory((global.maptalks = global.maptalks || {})));
+}(this, (function (exports) { 'use strict';
 
 function _defaults(obj, defaults) { var keys = Object.getOwnPropertyNames(defaults); for (var i = 0; i < keys.length; i++) { var key = keys[i]; var value = Object.getOwnPropertyDescriptor(defaults, key); if (value && value.configurable && obj[key] === undefined) { Object.defineProperty(obj, key, value); } } return obj; }
 
@@ -82,7 +85,7 @@ var defaultOptions = {
         'textSize': 12,
         'textFill': '#ebf2f9',
         'textWrapWidth': 100,
-        'textPadding': { 'width': 8, 'height': 8 }
+        'textPadding': [8, 8]
     },
     'symbol': {
         'lineColor': '#ffffff',
@@ -91,7 +94,7 @@ var defaultOptions = {
         'textSize': 12,
         'textFill': '#ebf2f9',
         'textWrapWidth': 100,
-        'textPadding': { 'width': 8, 'height': 8 }
+        'textPadding': [8, 8]
     },
     'position': {
         'x': 121.489935,
@@ -393,7 +396,7 @@ var Table = function (_maptalks$JSONAble) {
         }
         var _table = this;
         var map = this.getMap();
-        this.on('click', function (event) {
+        this.on('click', function () {
             map.options['doubleClickZoom'] = false;
             _table.prepareAdjust();
         });
@@ -453,9 +456,8 @@ var Table = function (_maptalks$JSONAble) {
             var style = this.getCellSymbol(0, i);
             var font = maptalks.StringUtil.getFont(style);
             var size = maptalks.StringUtil.stringLength(header, font);
-            var textPadding = style['textPadding'];
-            this._colWidths[i] = size['width'] + textPadding['width'] * 2;
-            this._rowHeights[0] = size['height'] + textPadding['height'] * 2;
+            this._colWidths[i] = size['width'];
+            this._rowHeights[0] = size['height'];
         }
     };
 
@@ -469,28 +471,22 @@ var Table = function (_maptalks$JSONAble) {
             for (var j = 0, length = this._columns.length; j < length; j++) {
                 var col = this._columns[j];
                 var content = row[col.dataIndex];
-                var maxWidth = col.maxWidth || this._cellWidth,
-                    width = 0;
                 var style = this.getCellSymbol(i + start, j);
-                var textPadding = style['textPadding'],
-                    padding = 0;
                 var font = maptalks.StringUtil.getFont(style);
                 var size = maptalks.StringUtil.stringLength(content, font);
-                if (size['width'] >= maxWidth) {
+                var maxWidth = this._colWidths[j],
                     width = maxWidth;
-                    padding = textPadding['width'];
-                } else if (size['width'] <= this._colWidths[j]) {
-                    width = this._colWidths[j];
-                } else {
-                    width = size['width'];
-                    padding = textPadding['width'];
+                if (size['width'] >= maxWidth) {
+                    var rowNum = Math.ceil(Math.ceil(size['width'] / maxWidth) / 4);
+                    width = maxWidth * rowNum;
                 }
-                style['textWrapWidth'] = width + padding;
+                style['textWrapWidth'] = width;
                 this._colWidths[j] = width;
                 var result = maptalks.StringUtil.splitTextToRow(content, style);
-                var rowSize = result['size'];
-                if (this._rowHeights[i + start] < rowSize['height']) {
-                    this._rowHeights[i + start] = rowSize['height'] + textPadding['height'] * 2;
+                var rowSize = result['size'],
+                    actualHeight = rowSize['height'];
+                if (this._rowHeights[i + start] < actualHeight) {
+                    this._rowHeights[i + start] = actualHeight;
                 }
             }
         }
@@ -1025,42 +1021,68 @@ Table.include( /** @lends Table.prototype */{
     createCell: function createCell(content, cellOffset, size, symbol) {
         var textSize = symbol['textSize'] || 12;
         var textLineSpacing = symbol['textLineSpacing'] || 8;
-        var boxPadding = symbol['textPadding'] || { 'width': 8, 'height': 8 };
+        var textPadding = symbol['textPadding'] || [8, 8];
         content = this._filterContent(content);
         var options = {
-            'symbol': {
-                'markerLineColor': symbol['lineColor'] || symbol['markerLineColor'] || '#ffffff',
-                'markerLineWidth': 1,
-                'markerLineOpacity': 0.9,
-                'markerLineDasharray': null,
+            'draggable': false,
+            'textStyle': {
+                'wrap': true,
+                'padding': textPadding,
+                'verticalAlignment': symbol['textVerticalAlignment'] || 'middle',
+                'horizontalAlignment': symbol['textHorizontalAlignment'] || 'middle',
+                'symbol': {
+                    'textFaceName': symbol['textFaceName'] || 'microsoft yahei',
+                    'textFill': symbol['textFill'] || '#ff0000',
+                    'textSize': textSize,
+                    'textLineSpacing': textLineSpacing,
+                    'textWeight': symbol['textWeight'],
+                    'textStyle': symbol['textStyle']
+                }
+            },
+            'boxSymbol': {
+                'markerType': 'square',
                 'markerFill': symbol['fill'] || symbol['markerFill'] || '#4e98dd',
                 'markerFillOpacity': 0.9,
+                'markerLineColor': symbol['lineColor'] || symbol['markerLineColor'] || '#ffffff',
+                'markerLineWidth': 1,
                 'markerDx': cellOffset['dx'] || 0,
-                'markerDy': cellOffset['dy'] || 0,
-
-                'textFaceName': symbol['textFaceName'] || 'microsoft yahei',
-                'textSize': textSize,
-                'textFill': symbol['textFill'] || '#ff0000',
-                'textOpacity': 1,
-                'textSpacing': 30,
-                'textWrapWidth': size['width'],
-                'textWrapBefore': false,
-                'textLineSpacing': textLineSpacing,
-                'textHorizontalAlignment': symbol['textHorizontalAlignment'] || 'middle',
-                'textVerticalAlignment': symbol['textVerticalAlignment'] || 'middle',
-                'textWeight': symbol['textWeight'],
-                'textStyle': symbol['textStyle'],
-                'textDx': cellOffset['dx'] || 0,
-                'textDy': cellOffset['dy'] || 0
-            },
-            'boxPadding': boxPadding,
-            'draggable': false,
-            'boxAutoSize': false,
-            'boxMinWidth': size['width'],
-            'boxMinHeight': size['height']
+                'markerDy': cellOffset['dy'] || 0
+            }
         };
+        // let options = {
+        //     'symbol': {
+        //         'markerLineColor': symbol['lineColor'] || symbol['markerLineColor'] || '#ffffff',
+        //         'markerLineWidth': 1,
+        //         'markerLineOpacity': 0.9,
+        //         'markerLineDasharray': null,
+        //         'markerFill': symbol['fill'] ||  symbol['markerFill']  || '#4e98dd',
+        //         'markerFillOpacity': 0.9,
+        //         'markerDx': cellOffset['dx'] || 0,
+        //         'markerDy': cellOffset['dy'] || 0,
+
+        //         'textFaceName': symbol['textFaceName'] || 'microsoft yahei',
+        //         'textSize': textSize,
+        //         'textFill': symbol['textFill'] || '#ff0000',
+        //         'textOpacity': 1,
+        //         'textSpacing': 30,
+        //         'textWrapWidth': size['width'],
+        //         'textWrapBefore': false,
+        //         'textLineSpacing': textLineSpacing,
+        //         'textHorizontalAlignment': symbol['textHorizontalAlignment'] || 'middle',
+        //         'textVerticalAlignment': symbol['textVerticalAlignment'] || 'middle',
+        //         'textWeight': symbol['textWeight'],
+        //         'textStyle': symbol['textStyle'],
+        //         'textDx': cellOffset['dx'] || 0,
+        //         'textDy': cellOffset['dy'] || 0
+        //     },
+        //     'boxPadding'   :   boxPadding,
+        //     'draggable': false,
+        //     'boxAutoSize': false,
+        //     'boxMinWidth': size['width'],
+        //     'boxMinHeight': size['height']
+        // };
         var coordinate = this.options['position'];
-        return new maptalks.TextBox(content, coordinate, options);
+        return new maptalks.TextBox(content, coordinate, size['width'], size['height'], options);
     },
 
     getCellOffset: function getCellOffset(row, col) {
@@ -1097,7 +1119,7 @@ Table.include( /** @lends Table.prototype */{
             }
         }
         if (!defaultSymbol['textPadding']) {
-            defaultSymbol['textPadding'] = { 'width': 8, 'height': 8 };
+            defaultSymbol['textPadding'] = [8, 8];
         }
         return defaultSymbol;
     },
@@ -1670,7 +1692,6 @@ var TableDragHandler = function (_maptalks$Handler) {
             return;
         }
         this.target.on('click', this._endDrag, this);
-        // this.target.removeStretchLine();
         this._lastPos = param['coordinate'];
         this._prepareMap();
         this._prepareDragHandler();
@@ -2017,8 +2038,7 @@ Table.include( /** @lends Table.prototype */{
     showOrHideRow: function showOrHideRow(rowNum, show) {
         this.stopEditTable();
         var row = void 0,
-            cell = void 0,
-            step = 1;
+            cell = void 0;
         var height = this.getRowHeight(rowNum);
         if (show) {
             height *= -1;
@@ -2030,12 +2050,10 @@ Table.include( /** @lends Table.prototype */{
                 cell = row[j];
                 if (i > rowNum) {
                     this._translateDy(cell, -height);
+                } else if (show) {
+                    cell.show();
                 } else {
-                    if (show) {
-                        cell.show();
-                    } else {
-                        cell.hide();
-                    }
+                    cell.hide();
                 }
             }
         }
@@ -2353,7 +2371,7 @@ Table.include( /** @lends Table.prototype */{
 
 Table.include( /** @lends Table.prototype */{
     linkTo: function linkTo(target) {
-        if (!target instanceof maptalks.Table) return;
+        if (!(target instanceof maptalks.Table)) return;
         if (target.getLinker()) return;
         if (target.getColumnNum() !== this.getColumnNum()) return;
         target.addLinker(this);
@@ -2538,21 +2556,21 @@ Table.include( /** @lends Table.prototype */{
                 //translate adjust line
                 _table._translateTopHandleLine(columnNum, coordOffset);
             });
-            handleLine.on('dragstart', function (eventParam) {
+            handleLine.on('dragstart', function () {
                 _table._isDragging = false;
                 _table._removeBottomLines();
             });
-            handleLine.on('dragend', function (eventParam) {
+            handleLine.on('dragend', function () {
                 _table._isDragging = true;
                 // _table._createBottomHandleLine(startViewPoint);
             });
-            handleLine.on('mouseover', function (eventParam) {
+            handleLine.on('mouseover', function () {
                 handleLine.setSymbol({
                     'lineColor': '#ff0000',
                     'lineWidth': 2
                 });
             });
-            handleLine.on('mouseout', function (eventParam) {
+            handleLine.on('mouseout', function () {
                 handleLine.setSymbol({
                     'lineColor': '#ffffff',
                     'lineWidth': 3,
@@ -2633,20 +2651,20 @@ Table.include( /** @lends Table.prototype */{
                 //translate adjust line
                 _table._translateBottomHandleLine(rowNum, coordOffset);
             });
-            handleLine.on('dragstart', function (eventParam) {
+            handleLine.on('dragstart', function () {
                 _table._isDragging = false;
                 _table._removeTopLines();
             });
-            handleLine.on('dragend', function (eventParam) {
+            handleLine.on('dragend', function () {
                 _table._isDragging = true;
             });
-            handleLine.on('mouseover', function (eventParam) {
+            handleLine.on('mouseover', function () {
                 handleLine.setSymbol({
                     'lineColor': '#ff0000',
                     'lineWidth': 2
                 });
             });
-            handleLine.on('mouseout', function (eventParam) {
+            handleLine.on('mouseout', function () {
                 handleLine.setSymbol({
                     'lineColor': '#ffffff',
                     'lineWidth': 3,
@@ -2670,13 +2688,13 @@ Table.include( /** @lends Table.prototype */{
     _bindTableEvent: function _bindTableEvent() {
         var map = this.getMap();
         var _table = this;
-        this.on('hide remove dragstart', function (param) {
+        this.on('hide remove dragstart', function () {
             _table._clearAdjustLayer();
         });
-        this.on('mouseout', function (param) {
+        this.on('mouseout', function () {
             map.options['doubleClickZoom'] = true;
         });
-        map.on('movestart zoomstart resize', function (param) {
+        map.on('movestart zoomstart resize', function () {
             _table._clearAdjustLayer();
         });
     },
@@ -2763,5 +2781,7 @@ Table.include( /** @lends Table.prototype */{
 exports.Table = Table;
 
 Object.defineProperty(exports, '__esModule', { value: true });
+
+typeof console !== 'undefined' && console.log('maptalks.table v0.1.0, requires maptalks@<2.0.0.');
 
 })));

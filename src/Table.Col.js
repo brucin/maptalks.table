@@ -109,7 +109,7 @@ Table.include(/** @lends Table.prototype */{
     setColumnWidth(colNum, width) {
         let oldWidth = this.getColumnWidth(colNum);
         let offset = width - oldWidth;
-        this.setColumnOffset(colNum, offset);        
+        this.setColumnOffset(colNum, offset);
     },
 
     setColumnOffset(colNum, widthOffset) {
@@ -140,7 +140,7 @@ Table.include(/** @lends Table.prototype */{
         let eventParam = {};
         eventParam['target'] = this;
         eventParam['columnNum'] = colNum;
-        eventParam['widthOffset'] = new maptalks.Point(widthOffset,0);
+        eventParam['widthOffset'] = new maptalks.Point(widthOffset, 0);
         this.fire('widthchanged', eventParam);
     },
 

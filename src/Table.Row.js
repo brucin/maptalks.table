@@ -95,9 +95,9 @@ Table.include(/** @lends Table.prototype */{
    */
     showOrHideRow(rowNum, show) {
         this.stopEditTable();
-        let row, cell, step = 1;
+        let row, cell;
         let height = this.getRowHeight(rowNum);
-        if(show) {
+        if (show) {
             height *= -1;
         }
         for (let i = rowNum, len = this._tableRows.length; i < len; i++) {
@@ -107,17 +107,15 @@ Table.include(/** @lends Table.prototype */{
                 cell = row[j];
                 if (i > rowNum) {
                     this._translateDy(cell, -height);
+                } else if (show) {
+                    cell.show();
                 } else {
-                    if(show) {
-                        cell.show();
-                    } else {
-                        cell.hide();
-                    }
+                    cell.hide();
                 }
             }
         }
         this.tableHeight -= height;
-        if(show) {
+        if (show) {
             this.fire('showrow', this);
         } else {
             this.fire('hiderow', this);
@@ -240,7 +238,7 @@ Table.include(/** @lends Table.prototype */{
             dataIndex = col['dataIndex'];
             text = '';
             if (item) {
-                if(item[dataIndex]) {
+                if (item[dataIndex]) {
                     text = item[dataIndex];
                 }
             } else {
@@ -283,7 +281,7 @@ Table.include(/** @lends Table.prototype */{
                 }
             }
         }
-        if (add) {//
+        if (add) { //
             this._rowHeights.splice(index, 0, rowHeight);
             if (this.options['header']) {
                 --index;

@@ -12,8 +12,8 @@ Table.include(/** @lends Table.prototype */{
     * Prepare to adjust
     */
     prepareAdjust() {
-        if(!this.options['adjustable']) return;
-        if(!this.getMap()) return;
+        if (!this.options['adjustable']) return;
+        if (!this.getMap()) return;
         this._prepareEditLayer();
         this._bindTableEvent();
     },
@@ -23,14 +23,14 @@ Table.include(/** @lends Table.prototype */{
         const coordinate = this.getCoordinates(), startViewPoint = map.coordinateToViewPoint(coordinate);
         let layerId = TABLE_ADJUST_LAYER_PREFIX;
         this._adjustLayer = map.getLayer(layerId);
-        if(!this._adjustLayer) {
+        if (!this._adjustLayer) {
             this._adjustLayer = new maptalks.VectorLayer(layerId);
             map.addLayer(this._adjustLayer);
         } else {
             this._clearAdjustLayer();
             this._adjustLayer.bringToFront();
         }
-        if(this.options['adjustable'] === 'x') {    
+        if (this.options['adjustable'] === 'x') {
             this._topLines = this._createTopHandleLine(startViewPoint);
         } else if (this.options['adjustable'] === 'y') {
             this._bottomLines = this._createBottomHandleLine(startViewPoint);
@@ -54,21 +54,21 @@ Table.include(/** @lends Table.prototype */{
             width += this.getColumnWidth(i);
             let start = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width, 0)));
             let end = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width, height)));
-            let handleLine = new maptalks.LineString([start, end], 
-            {
-                'id' : TOP_ADJUST_LINE_PREFIX + i,
-                'draggable' : true,
-                'dragShadow' : false,
-                'dragOnAxis' : 'x',
-                'cursor' : 'ew-resize',
-                'symbol' : {
-                    'lineColor' : '#ffffff',
-                    'lineWidth' : 3,
-                    'lineOpacity' : 0.3
-                }
-            });
+            let handleLine = new maptalks.LineString([start, end],
+                {
+                    'id' : TOP_ADJUST_LINE_PREFIX + i,
+                    'draggable' : true,
+                    'dragShadow' : false,
+                    'dragOnAxis' : 'x',
+                    'cursor' : 'ew-resize',
+                    'symbol' : {
+                        'lineColor' : '#ffffff',
+                        'lineWidth' : 3,
+                        'lineOpacity' : 0.3
+                    }
+                });
             let _table = this;
-            handleLine.on('dragging', function(eventParam) {
+            handleLine.on('dragging', function (eventParam) {
                 let lineId = handleLine.getId();
                 if (!lineId) return;
                 let columnNum = parseInt(lineId.substring(lineId.lastIndexOf('_') + 1));
@@ -76,7 +76,7 @@ Table.include(/** @lends Table.prototype */{
                 let pointOffset = eventParam['pointOffset'];
                 let nowCoordinate = eventParam['coordinate'];
                 nowCoordinate.y = 0;
-                if(nowCoordinate.x < monitorCoordinate.x) {//out of scope
+                if (nowCoordinate.x < monitorCoordinate.x) { //out of scope
                     coordOffset = monitorCoordinate.substract(nowCoordinate);
                     if (handleLine.options['dragShadow']) {
                         handleLine.draggable._shadow.translate(coordOffset);
@@ -99,21 +99,21 @@ Table.include(/** @lends Table.prototype */{
                 //translate adjust line
                 _table._translateTopHandleLine(columnNum, coordOffset);
             });
-            handleLine.on('dragstart', function(eventParam) {
+            handleLine.on('dragstart', function () {
                 _table._isDragging = false;
                 _table._removeBottomLines();
             });
-            handleLine.on('dragend', function(eventParam){
+            handleLine.on('dragend', function () {
                 _table._isDragging = true;
                 // _table._createBottomHandleLine(startViewPoint);
             });
-            handleLine.on('mouseover', function(eventParam) {
+            handleLine.on('mouseover', function () {
                 handleLine.setSymbol({
                     'lineColor' : '#ff0000',
                     'lineWidth' : 2
                 });
             });
-            handleLine.on('mouseout', function(eventParam) {
+            handleLine.on('mouseout', function () {
                 handleLine.setSymbol({
                     'lineColor' : '#ffffff',
                     'lineWidth' : 3,
@@ -144,21 +144,21 @@ Table.include(/** @lends Table.prototype */{
             height += this.getRowHeight(i);
             let start = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(0, height)));
             let end = map.viewPointToCoordinate(startViewPoint.add(new maptalks.Point(width, height)));
-            let handleLine = new maptalks.LineString([start, end], 
-            {
-                'id' : LEFT_ADJUST_LINE_PREFIX + i,
-                'draggable' : true,
-                'dragShadow' : false,
-                'dragOnAxis' : 'y',
-                'cursor' : 'ns-resize',
-                'symbol' : {
-                    'lineColor' : '#ffffff',
-                    'lineWidth' : 3,
-                    'lineOpacity' : 0.3
-                }
-            });
+            let handleLine = new maptalks.LineString([start, end],
+                {
+                    'id' : LEFT_ADJUST_LINE_PREFIX + i,
+                    'draggable' : true,
+                    'dragShadow' : false,
+                    'dragOnAxis' : 'y',
+                    'cursor' : 'ns-resize',
+                    'symbol' : {
+                        'lineColor' : '#ffffff',
+                        'lineWidth' : 3,
+                        'lineOpacity' : 0.3
+                    }
+                });
             let _table = this;
-            handleLine.on('dragging', function(eventParam) {
+            handleLine.on('dragging', function (eventParam) {
                 let lineId = handleLine.getId();
                 if (!lineId) return;
                 let rowNum = parseInt(lineId.substring(lineId.lastIndexOf('_') + 1));
@@ -168,7 +168,7 @@ Table.include(/** @lends Table.prototype */{
 
                 monitorPoint.x = 0;
                 monitorCoordinate.x = 0;
-                if(nowCoordinate.y > monitorCoordinate.y) {//out of scope
+                if (nowCoordinate.y > monitorCoordinate.y) { //out of scope
                     let offset = monitorCoordinate.substract(nowCoordinate);
                     if (handleLine.options['dragShadow']) {
                         handleLine.draggable._shadow.translate(offset);
@@ -189,20 +189,20 @@ Table.include(/** @lends Table.prototype */{
                 //translate adjust line
                 _table._translateBottomHandleLine(rowNum, coordOffset);
             });
-            handleLine.on('dragstart', function(eventParam) {
+            handleLine.on('dragstart', function () {
                 _table._isDragging = false;
                 _table._removeTopLines();
             });
-            handleLine.on('dragend', function(eventParam){
+            handleLine.on('dragend', function () {
                 _table._isDragging = true;
             });
-            handleLine.on('mouseover', function(eventParam) {
+            handleLine.on('mouseover', function () {
                 handleLine.setSymbol({
                     'lineColor' : '#ff0000',
                     'lineWidth' : 2
                 });
             });
-            handleLine.on('mouseout', function(eventParam) {
+            handleLine.on('mouseout', function () {
                 handleLine.setSymbol({
                     'lineColor' : '#ffffff',
                     'lineWidth' : 3,
@@ -224,29 +224,29 @@ Table.include(/** @lends Table.prototype */{
     _bindTableEvent() {
         let map = this.getMap();
         let _table = this;
-        this.on('hide remove dragstart', function(param) {
+        this.on('hide remove dragstart', function () {
             _table._clearAdjustLayer();
         });
-        this.on('mouseout', function (param) { 
+        this.on('mouseout', function () {
             map.options['doubleClickZoom'] = true;
         });
-        map.on('movestart zoomstart resize', function(param) {
+        map.on('movestart zoomstart resize', function () {
             _table._clearAdjustLayer();
         });
     },
 
     _clearAdjustLayer() {
-        if(this._adjustLayer) this._adjustLayer.clear();
+        if (this._adjustLayer) this._adjustLayer.clear();
     },
 
     _removeTopLines() {
         this._adjustLayer.removeGeometry(this._topLines);
-        this._topLines.splice(0,this._topLines.length);
+        this._topLines.splice(0, this._topLines.length);
     },
 
     _removeBottomLines() {
         this._adjustLayer.removeGeometry(this._bottomLines);
-        this._bottomLines.splice(0,this._bottomLines.length);
+        this._bottomLines.splice(0, this._bottomLines.length);
     },
 
     _resizeRow(rowNum, pointOffset) {

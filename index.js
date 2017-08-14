@@ -1,5 +1,3 @@
-import * as maptalks from 'maptalks';
-
 import './src/Table.Cell';
 import './src/Table.Col';
 import './src/Table.Drag';

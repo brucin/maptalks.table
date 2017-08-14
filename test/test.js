@@ -1,25 +1,25 @@
-describe('Table', function () {
-    let container, eventContainer, map, layer, tableOptions, dynamicLayer, dynamicTableOptions, marker;
-    let center = new maptalks.Coordinate(118.846825, 32.046534);
+describe('#Table', function () {
+    let container, eventContainer, map, layer, dragLayer, tableOptions, dynamicLayer, dynamicTableOptions, marker;
+    const center = new maptalks.Coordinate(118.846825, 32.046534);
 
     function dragTable(table, isMove) {
-        map.removeLayer('DRAG_LAYER');
-        let layer = new maptalks.VectorLayer('DRAG_LAYER');
-        map.addLayer(layer);
+        dragLayer = map.getLayer('DRAG_LAYER').clear(); 
 
-        table.addTo(layer);
         let spy = sinon.spy();
         table.on('mousedown', spy);
         //getPagePosition
-        let domPosition = getPagePosition(container);
-        let point = map.coordinateToContainerPoint(table.getCoordinates()).add(domPosition);
+        const domPosition = getPagePosition(container);
+        const point = map.coordinateToContainerPoint(table.getCoordinates()).add(domPosition);
         happen.mousedown(eventContainer, {
-            'clientX':point.x,
-            'clientY':point.y
+            'clientX' : point.x,
+            'clientY' : point.y
+        });
+        maptalks.DomUtil.on(eventContainer, 'mousedown', function() {
+            console.log('eventContainer mouse down.');
         });
         expect(spy.called).to.be.ok();
         if (isMove === undefined || isMove) {
-            for (var i = 0; i < 10; i++) {
+            for (let i = 0; i < 10; i++) {
                 happen.mousemove(document, {
                     'clientX':point.x + i,
                     'clientY':point.y + i
@@ -30,8 +30,8 @@ describe('Table', function () {
     }
 
     function getPagePosition(obj) {
-        var docEl = document.documentElement;
-        var rect = obj.getBoundingClientRect();
+        const docEl = document.documentElement;
+        const rect = obj.getBoundingClientRect();
         return new maptalks.Point(rect['left'] + docEl['scrollLeft'], rect['top'] + docEl['scrollTop']);
     }
 
@@ -40,21 +40,22 @@ describe('Table', function () {
         container.style.width = '800px';
         container.style.height = '600px';
         document.body.appendChild(container);
-        let option = {
+        const option = {
             zoomAnimation: false,
             zoom: 15,
             center: center
         };
         map = new maptalks.Map(container, option);
         layer = new maptalks.VectorLayer('vector').addTo(map);
+        dragLayer = new maptalks.VectorLayer('DRAG_LAYER').addTo(map);
         map.config('panAnimation', false);
         eventContainer = map._panels.canvasContainer;
-        let columns = [
+        const columns = [
             { header:'表头', dataIndex: 'titleOne', type: 'string', maxWidth: 50 },
             { header:'表头', dataIndex: 'titleTwo', type: 'string', maxWidth: 50 },
             { header:'表头', dataIndex: 'titleThree', type: 'string', maxWidth: 50 }
         ];
-        let headerSymbol = {
+        const headerSymbol = {
             'lineColor': '#cccccc',
             'fill': '#2F373E',
             'textFaceName': 'microsoft yahei',
@@ -63,7 +64,7 @@ describe('Table', function () {
             'textWrapWidth': 100,
             'textLineSpacing': 1
         };
-        let symbol = {
+        const symbol = {
             'lineColor': '#cccccc',
             'fill': '#eeeeee',
             'textFaceName': 'microsoft yahei',
@@ -98,7 +99,7 @@ describe('Table', function () {
         marker = new maptalks.Marker(center, {
             'properties' : { 'id' : 1, 'titleOne':'1', 'titleTwo':'1', 'titleThree': '1' }
         }).addTo(dynamicLayer);
-        let prop = marker.getProperties();
+        const prop = marker.getProperties();
         prop['coordinate'] = center;
         dynamicTableOptions = {
             'id': 'TEST_DYNAMIC_TABLE_ID',
@@ -126,8 +127,8 @@ describe('Table', function () {
         document.body.innerHTML = '';
     });
 
-    it('add talbe to layer', function () {
-        let table = new maptalks.Table(tableOptions);
+    it('add table to layer', function () {
+        const table = new maptalks.Table(tableOptions);
         table.addTo(layer);
         expect(table.isVisible()).to.be.ok();
         table.hide();
@@ -136,7 +137,7 @@ describe('Table', function () {
     });
 
     describe('drag table', function () {
-        it('can drag talbe', function () {
+        it('can drag table', function () {
             let table = new maptalks.Table(tableOptions);
             dragTable(table);
             expect(table.getCoordinates()).not.to.be.closeTo(center);
@@ -167,7 +168,6 @@ describe('Table', function () {
             table.addTo(layer);
             let oldRow = table.getRow(1);
             let oldDy = oldRow[0].getSymbol().markerDy;
-            let oldRowHeight = table.getRowHeight(1);
             let data = { 'titleOne' : 'newOne', 'titleTwo' : 'newTwo', 'titleThree' : 'newThree' };
             table.addRow(1, data, true);
             let newRow = table.getRow(2);
@@ -332,7 +332,6 @@ describe('Table', function () {
             let table = new maptalks.Table(tableOptions);
             table.addTo(layer);
             expect(table.getRowHeight(1)).to.be.above(14);
-            expect(table.getColumnWidth(2)).to.be.equal(50);
             table.remove();
         });
 
@@ -374,7 +373,7 @@ describe('Table', function () {
 
             let map = linker.getMap();
             let targetTableCoordinate = targetTable.getCoordinates(),
-            targetViewPoint = map.coordinateToViewPoint(targetTableCoordinate);
+                targetViewPoint = map.coordinateToViewPoint(targetTableCoordinate);
             let tableHeight = targetTable.getTableHeight();
             let targetCoordinate = map.viewPointToCoordinate(targetViewPoint.add(new maptalks.Point(0, tableHeight)));
             linker.linkTo(targetTable);
@@ -396,9 +395,9 @@ describe('Table', function () {
 
             let map = linker.getMap();
             let targetTableCoordinate = targetTable.getCoordinates(),
-            targetViewPoint = map.coordinateToViewPoint(targetTableCoordinate);
+                targetViewPoint = map.coordinateToViewPoint(targetTableCoordinate);
             let tableHeight = targetTable.getTableHeight();
-            let targetCoordinate = map.viewPointToCoordinate(targetViewPoint.add(new maptalks.Point(0, tableHeight)));            
+            let targetCoordinate = map.viewPointToCoordinate(targetViewPoint.add(new maptalks.Point(0, tableHeight)));
             expect(linker.getCoordinates()).to.be.closeTo(targetCoordinate);
 
             targetTable.remove();
@@ -411,12 +410,12 @@ describe('Table', function () {
             let linker = new maptalks.Table(dynamicTableOptions);
             linker.addTo(layer);
             linker.linkTo(targetTable);
-            
+
             let map = linker.getMap();
             let targetTableCoordinate = targetTable.getCoordinates(),
-            targetViewPoint = map.coordinateToViewPoint(targetTableCoordinate);
+                targetViewPoint = map.coordinateToViewPoint(targetTableCoordinate);
             let tableHeight = targetTable.getTableHeight();
-            let targetCoordinate = map.viewPointToCoordinate(targetViewPoint.add(new maptalks.Point(0, tableHeight))); 
+            let targetCoordinate = map.viewPointToCoordinate(targetViewPoint.add(new maptalks.Point(0, tableHeight)));
             expect(linker.getCoordinates()).to.be.closeTo(targetCoordinate);
             linker.unLink();
             //drag target table
@@ -440,15 +439,15 @@ describe('Table', function () {
             linker.addTo(layer);
             linker.linkTo(targetTable);
 
-            
+
             let map = linker.getMap();
             let targetTableCoordinate = targetTable.getCoordinates(),
-            targetViewPoint = map.coordinateToViewPoint(targetTableCoordinate);
+                targetViewPoint = map.coordinateToViewPoint(targetTableCoordinate);
             let tableHeight = targetTable.getTableHeight();
             let firstRowHeight = targetTable.getRowHeight(1);
             targetTable.setRowHeight(1, 100);
 
-            let targetCoordinate = map.viewPointToCoordinate(targetViewPoint.add(new maptalks.Point(0, tableHeight+(100-firstRowHeight)))); 
+            let targetCoordinate = map.viewPointToCoordinate(targetViewPoint.add(new maptalks.Point(0, tableHeight + (100 - firstRowHeight))));
             expect(linker.getCoordinates()).to.be.closeTo(targetCoordinate);
 
             targetTable.remove();

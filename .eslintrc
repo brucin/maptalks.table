@@ -11,8 +11,17 @@
   },
   "extends": "maptalks",
   "globals": {
+      "beforeEach" : true,
+      "afterEach" : true,
+      "describe" : true,
+      "it" : true,
+      "expect" : true,
+      "sinon" : true,
+      "happen" : true
   },
+  "plugins": ["mocha"],
   "rules": {
-    "strict": 0
+    "strict" : 0,
+    "global-require": 0
   }
 }

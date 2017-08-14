@@ -18,7 +18,7 @@ const defaultOptions = {
         'textSize': 12,
         'textFill': '#ebf2f9',
         'textWrapWidth': 100,
-        'textPadding' :  { 'width' : 8, 'height' : 8 },
+        'textPadding' : [8, 8]
     },
     'symbol': {
         'lineColor': '#ffffff',
@@ -27,7 +27,7 @@ const defaultOptions = {
         'textSize': 12,
         'textFill': '#ebf2f9',
         'textWrapWidth': 100,
-        'textPadding' :  { 'width' : 8, 'height' : 8 },
+        'textPadding' :  [8, 8]
     },
     'position': {
         'x': 121.489935,
@@ -130,12 +130,12 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
             let addColumn = true;
             let cols = this.options['columns'];
             for (var i = 0; i < cols.length; i++) {
-                if(cols[i].dataIndex === 'maptalks_order') {
+                if (cols[i].dataIndex === 'maptalks_order') {
                     addColumn = false;
                     break;
                 }
             }
-            if(addColumn) {
+            if (addColumn) {
                 let startNum = parseInt(this.options['startNum']);
                 let orderCol = { header: orderTitle, dataIndex: 'maptalks_order', type: 'number' };
                 this.options['columns'].unshift(orderCol);
@@ -298,7 +298,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         this._addToLayer(this._tableRows, true);
         this._addEventsToTable();
         //
-        if(this.options['hideHeader']) {
+        if (this.options['hideHeader']) {
             this.hideHeader();
         }
     }
@@ -314,7 +314,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         }
         let _table = this;
         const map = this.getMap();
-        this.on('click', function (event) {
+        this.on('click', function () {
             map.options['doubleClickZoom'] = false;
             _table.prepareAdjust();
         });
@@ -378,9 +378,8 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
             let style =  this.getCellSymbol(0, i);
             let font = maptalks.StringUtil.getFont(style);
             let size = maptalks.StringUtil.stringLength(header, font);
-            let textPadding = style['textPadding'];
-            this._colWidths[i] = size['width'] + textPadding['width'] * 2;
-            this._rowHeights[0] = size['height'] + textPadding['height'] * 2;
+            this._colWidths[i] = size['width'];
+            this._rowHeights[0] = size['height'];
         }
     }
 
@@ -394,26 +393,20 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
             for (let j = 0, length = this._columns.length; j < length; j++) {
                 let col = this._columns[j];
                 let content = row[col.dataIndex];
-                let maxWidth = col.maxWidth || this._cellWidth, width = 0;
                 let style =  this.getCellSymbol(i + start, j);
-                let textPadding = style['textPadding'], padding = 0;
                 let font = maptalks.StringUtil.getFont(style);
                 let size = maptalks.StringUtil.stringLength(content, font);
+                let maxWidth = this._colWidths[j], width = maxWidth;
                 if (size['width'] >= maxWidth) {
-                    width = maxWidth;
-                    padding = textPadding['width'];
-                } else if (size['width'] <= this._colWidths[j]) {
-                    width = this._colWidths[j];
-                } else {
-                    width = size['width'];
-                    padding = textPadding['width'];
+                    let rowNum = Math.ceil(Math.ceil(size['width'] / maxWidth) / 4);
+                    width = maxWidth * rowNum;
                 }
-                style['textWrapWidth'] = width + padding;
+                style['textWrapWidth'] = width;
                 this._colWidths[j] = width;
                 let result = maptalks.StringUtil.splitTextToRow(content, style);
-                let rowSize = result['size'];
-                if (this._rowHeights[i + start] < rowSize['height']) {
-                    this._rowHeights[i + start] = rowSize['height'] + textPadding['height'] * 2;
+                let rowSize = result['size'], actualHeight = rowSize['height'];
+                if (this._rowHeights[i + start] < actualHeight) {
+                    this._rowHeights[i + start] = actualHeight;
                 }
             }
         }
@@ -443,9 +436,9 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         let tableSymbols = {};
         for (let i = 0; i < this._tableRows.length; i++) {
             let row = this._tableRows[i];
-            if(row) {
+            if (row) {
                 for (let j = 0, rowLength = row.length; j < rowLength; j++) {
-                    tableSymbols[i + '_' + j] = row[j].getSymbol(); 
+                    tableSymbols[i + '_' + j] = row[j].getSymbol();
                 }
 
             }
@@ -455,7 +448,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
 
     hide() {
         let row, start = 0;
-        if(this.options['hideHeader']) {
+        if (this.options['hideHeader']) {
             start = 1;
         }
         for (let i = start, len = this._tableRows.length; i < len; i++) {
@@ -474,7 +467,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
 
     show() {
         let row, start = 0;
-        if(this.options['hideHeader']) {
+        if (this.options['hideHeader']) {
             start = 1;
         }
         for (let i = start, len = this._tableRows.length; i < len; i++) {
@@ -718,9 +711,9 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         for (let i = 0, len = this._headAttributes.length; i < len; i++) {
             attr = this._headAttributes[i];
             displayName = attr['displayName'];
-            item = { 'item': displayName, 'click': function(param) {
+            item = { 'item': displayName, 'click': function (param) {
                 me._changeHeader(param, cell);
-            }};
+            } };
             items.push(item);
         }
         let menuOptions = {

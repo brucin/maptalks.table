@@ -5,42 +5,68 @@ Table.include(/** @lends Table.prototype */{
     createCell: function (content, cellOffset, size, symbol) {
         let textSize = symbol['textSize'] || 12;
         let textLineSpacing = symbol['textLineSpacing'] || 8;
-        let boxPadding = symbol['textPadding'] || { 'width' : 8, 'height' : 8 };
+        let textPadding = symbol['textPadding'] || [8, 8];
         content = this._filterContent(content);
         let options = {
-            'symbol': {
-                'markerLineColor': symbol['lineColor'] || symbol['markerLineColor'] || '#ffffff',
-                'markerLineWidth': 1,
-                'markerLineOpacity': 0.9,
-                'markerLineDasharray': null,
-                'markerFill': symbol['fill'] ||  symbol['markerFill']  || '#4e98dd',
-                'markerFillOpacity': 0.9,
-                'markerDx': cellOffset['dx'] || 0,
-                'markerDy': cellOffset['dy'] || 0,
-
-                'textFaceName': symbol['textFaceName'] || 'microsoft yahei',
-                'textSize': textSize,
-                'textFill': symbol['textFill'] || '#ff0000',
-                'textOpacity': 1,
-                'textSpacing': 30,
-                'textWrapWidth': size['width'],
-                'textWrapBefore': false,
-                'textLineSpacing': textLineSpacing,
-                'textHorizontalAlignment': symbol['textHorizontalAlignment'] || 'middle',
-                'textVerticalAlignment': symbol['textVerticalAlignment'] || 'middle',
-                'textWeight': symbol['textWeight'],
-                'textStyle': symbol['textStyle'],
-                'textDx': cellOffset['dx'] || 0,
-                'textDy': cellOffset['dy'] || 0
+            'draggable' : false,
+            'textStyle' : {
+                'wrap' : true,
+                'padding' : textPadding,
+                'verticalAlignment' : symbol['textVerticalAlignment'] || 'middle',
+                'horizontalAlignment' : symbol['textHorizontalAlignment'] || 'middle',
+                'symbol' : {
+                    'textFaceName' : symbol['textFaceName'] || 'microsoft yahei',
+                    'textFill' : symbol['textFill'] || '#ff0000',
+                    'textSize' : textSize,
+                    'textLineSpacing' : textLineSpacing,
+                    'textWeight' : symbol['textWeight'],
+                    'textStyle' : symbol['textStyle']
+                }
             },
-            'boxPadding'   :   boxPadding,
-            'draggable': false,
-            'boxAutoSize': false,
-            'boxMinWidth': size['width'],
-            'boxMinHeight': size['height']
+            'boxSymbol': {
+                'markerType' : 'square',
+                'markerFill' : symbol['fill'] || symbol['markerFill'] || '#4e98dd',
+                'markerFillOpacity' : 0.9,
+                'markerLineColor' : symbol['lineColor'] || symbol['markerLineColor'] || '#ffffff',
+                'markerLineWidth' : 1,
+                'markerDx': cellOffset['dx'] || 0,
+                'markerDy': cellOffset['dy'] || 0
+            }
         };
+        // let options = {
+        //     'symbol': {
+        //         'markerLineColor': symbol['lineColor'] || symbol['markerLineColor'] || '#ffffff',
+        //         'markerLineWidth': 1,
+        //         'markerLineOpacity': 0.9,
+        //         'markerLineDasharray': null,
+        //         'markerFill': symbol['fill'] ||  symbol['markerFill']  || '#4e98dd',
+        //         'markerFillOpacity': 0.9,
+        //         'markerDx': cellOffset['dx'] || 0,
+        //         'markerDy': cellOffset['dy'] || 0,
+
+        //         'textFaceName': symbol['textFaceName'] || 'microsoft yahei',
+        //         'textSize': textSize,
+        //         'textFill': symbol['textFill'] || '#ff0000',
+        //         'textOpacity': 1,
+        //         'textSpacing': 30,
+        //         'textWrapWidth': size['width'],
+        //         'textWrapBefore': false,
+        //         'textLineSpacing': textLineSpacing,
+        //         'textHorizontalAlignment': symbol['textHorizontalAlignment'] || 'middle',
+        //         'textVerticalAlignment': symbol['textVerticalAlignment'] || 'middle',
+        //         'textWeight': symbol['textWeight'],
+        //         'textStyle': symbol['textStyle'],
+        //         'textDx': cellOffset['dx'] || 0,
+        //         'textDy': cellOffset['dy'] || 0
+        //     },
+        //     'boxPadding'   :   boxPadding,
+        //     'draggable': false,
+        //     'boxAutoSize': false,
+        //     'boxMinWidth': size['width'],
+        //     'boxMinHeight': size['height']
+        // };
         let coordinate = this.options['position'];
-        return new maptalks.TextBox(content, coordinate, options);
+        return new maptalks.TextBox(content, coordinate, size['width'], size['height'], options);
     },
 
     getCellOffset: function (row, col) {
@@ -75,8 +101,8 @@ Table.include(/** @lends Table.prototype */{
                 defaultSymbol =  symbol;
             }
         }
-        if(!defaultSymbol['textPadding']) {
-            defaultSymbol['textPadding'] = { 'width' : 8, 'height' : 8 };
+        if (!defaultSymbol['textPadding']) {
+            defaultSymbol['textPadding'] = [8, 8];
         }
         return defaultSymbol;
     },
