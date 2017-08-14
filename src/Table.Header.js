@@ -23,7 +23,6 @@ Table.include(/** @lends Table.prototype */{
     hideHeader() {
         this.showOrHideRow(0, false);
         this.config('hideHeader', true);
-
     },
 
     showHeader() {

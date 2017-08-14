@@ -14,9 +14,6 @@ describe('#Table', function () {
             'clientX' : point.x,
             'clientY' : point.y
         });
-        maptalks.DomUtil.on(eventContainer, 'mousedown', function() {
-            console.log('eventContainer mouse down.');
-        });
         expect(spy.called).to.be.ok();
         if (isMove === undefined || isMove) {
             for (let i = 0; i < 10; i++) {
