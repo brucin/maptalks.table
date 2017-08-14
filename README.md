@@ -22,9 +22,9 @@ npm install maptalks-table
 
 ## Demo
 
-![Maptalks Table Demo](http://brucin.github.io/maptalks.table.js/demo/image/screenshot.png)
+![Maptalks Table Demo](http://brucin.github.io/maptalks.table/demo/image/screenshot.png)
 
-[Maptalks Table Demo](http://brucin.github.io/maptalks.table.js/)
+[Maptalks Table Demo](https://brucin.github.io/maptalks.table/demo/)
 
 
 # Table Class
