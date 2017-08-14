@@ -1,9 +1,9 @@
 describe('#Table', function () {
-    let container, eventContainer, map, layer, dragLayer, tableOptions, dynamicLayer, dynamicTableOptions, marker;
+    let container, eventContainer, map, layer, /*dragLayer,*/ tableOptions, dynamicLayer, dynamicTableOptions, marker;
     const center = new maptalks.Coordinate(118.846825, 32.046534);
 
     function dragTable(table, isMove) {
-        dragLayer = map.getLayer('DRAG_LAYER').clear(); 
+        // dragLayer = map.getLayer('DRAG_LAYER').clear();
 
         let spy = sinon.spy();
         table.on('mousedown', spy);
@@ -40,11 +40,12 @@ describe('#Table', function () {
         const option = {
             zoomAnimation: false,
             zoom: 15,
-            center: center
+            center: center,
+            onlyVisibleGeometryEvents : false
         };
         map = new maptalks.Map(container, option);
         layer = new maptalks.VectorLayer('vector').addTo(map);
-        dragLayer = new maptalks.VectorLayer('DRAG_LAYER').addTo(map);
+        /*dragLayer = new maptalks.VectorLayer('DRAG_LAYER').addTo(map);*/
         map.config('panAnimation', false);
         eventContainer = map._panels.canvasContainer;
         const columns = [
@@ -120,6 +121,7 @@ describe('#Table', function () {
     });
 
     afterEach(function () {
+        map.remove();
         maptalks.DomUtil.removeDomNode(container);
         document.body.innerHTML = '';
     });
@@ -136,6 +138,7 @@ describe('#Table', function () {
     describe('drag table', function () {
         it('can drag table', function () {
             let table = new maptalks.Table(tableOptions);
+            table.addTo(layer);
             dragTable(table);
             expect(table.getCoordinates()).not.to.be.closeTo(center);
             table.remove();
@@ -143,6 +146,7 @@ describe('#Table', function () {
 
         it('disable table dragable', function () {
             let table = new maptalks.Table(tableOptions);
+            table.addTo(layer);
             table.config('draggable', false);
             dragTable(table);
             expect(table.getCoordinates()).to.be.closeTo(center);
