@@ -1,24 +1,38 @@
-maptalks.Table.Drag = maptalks.Handler.extend({
+import Table from './Table';
 
-    dragStageLayerId : maptalks.internalLayerPrefix + '_drag_table_stage',
+const DRAG_STAGE_LAYER_ID = maptalks.INTERNAL_LAYER_PREFIX + '_drag_stage';
 
-    START: maptalks.Browser.touch ? ['touchstart', 'mousedown'] : ['mousedown'],
+const EVENTS = maptalks.Browser.touch ? 'touchstart mousedown' : 'mousedown';
 
-    addHooks: function () {
-        this.target.on(this.START.join(' '), this._startDrag, this);
+/**
+ * Drag handler for table.
+ * @category handler
+ * @extends Handler
+ * @ignore
+ */
+class TableDragHandler extends maptalks.Handler  {
 
-    },
-    removeHooks: function () {
-        this.target.off(this.START.join(' '), this._startDrag, this);
+    /**
+     * @param  {Geometry} target geometry target to drag
+     */
+    constructor(target) {
+        super(target);
+    }
 
-    },
+    addHooks() {
+        this.target.on(EVENTS, this._startDrag, this);
+    }
 
-    _startDrag: function (param) {
+    removeHooks() {
+        this.target.off(EVENTS, this._startDrag, this);
+    }
+
+    _startDrag(param) {
         var map = this.target.getMap();
         if (!map) {
             return;
         }
-        if (this.isDragging()) {
+        if (this._isDragging) {
             return;
         }
         var domEvent = param['domEvent'];
@@ -26,7 +40,6 @@ maptalks.Table.Drag = maptalks.Handler.extend({
             return;
         }
         this.target.on('click', this._endDrag, this);
-        this.target.removeStretchLine();
         this._lastPos = param['coordinate'];
         this._prepareMap();
         this._prepareDragHandler();
@@ -44,9 +57,9 @@ maptalks.Table.Drag = maptalks.Handler.extend({
          * @property {Event} domEvent                 - dom event
          */
         this.target.fire('dragstart', param);
-    },
+    }
 
-    _prepareMap:function () {
+    _prepareMap() {
         var map = this.target.getMap();
         this._mapDraggable = map.options['draggable'];
         this._mapHitDetect = map.options['hitDetect'];
@@ -55,37 +68,35 @@ maptalks.Table.Drag = maptalks.Handler.extend({
             'hitDetect' : false,
             'draggable' : false
         });
-    },
+    }
 
-    _prepareDragHandler:function () {
+    _prepareDragHandler() {
         var map = this.target.getMap();
-        this._dragHandler = new maptalks.Handler.Drag(map._panels.mapWrapper || map._containerDOM);
+        this._dragHandler = new maptalks.DragHandler(map._panels.mapWrapper || map._containerDOM);
         this._dragHandler.on('dragging', this._dragging, this);
         this._dragHandler.on('mouseup', this._endDrag, this);
         this._dragHandler.enable();
-    },
+    }
 
-    _prepareShadow:function () {
+    _prepareShadow() {
         var target = this.target;
         this._prepareDragStageLayer();
         if (this._shadow) {
             this._shadow.remove();
         }
-        var map = target.getMap();
-        var offset = target.getCellOffset(0,0);
         var width = target.tableWidth, height = target.tableHeight;
         this._shadow = new maptalks.Marker(target.getCenter(), {
             'draggable' : true,
             'symbol'    : {
                 'markerType' : 'square',
                 'markerLineColor': '#ffffff',
-                'markerLineDasharray' : [5,5,2,5],
+                'markerLineDasharray' : [5, 5, 2, 5],
                 'markerFill': '#4e98dd',
                 'markerFillOpacity' : 0.2,
                 'markerWidth': width,
                 'markerHeight': height,
-                'markerDx' : width/2,
-                'markerDy' : height/2
+                'markerDx' : width / 2,
+                'markerDy' : height / 2
             }
         });
         var shadow = this._shadow;
@@ -97,27 +108,27 @@ maptalks.Table.Drag = maptalks.Handler.extend({
         var shadowConnectors = [];
         this._shadowConnectors = shadowConnectors;
         this._dragStageLayer.bringToFront().addGeometry(shadowConnectors.concat(shadow));
-    },
+    }
 
-    _onTargetUpdated:function () {
+    _onTargetUpdated() {
         if (this._shadow) {
             this._shadow.setSymbol(this.target.getSymbol());
         }
-    },
+    }
 
-    _prepareDragStageLayer:function () {
+    _prepareDragStageLayer() {
         var map = this.target.getMap(),
             layer = this.target.getLayer();
-        this._dragStageLayer = map.getLayer(this.dragStageLayerId);
+        this._dragStageLayer = map.getLayer(DRAG_STAGE_LAYER_ID);
         if (!this._dragStageLayer) {
-            this._dragStageLayer = new maptalks.VectorLayer(this.dragStageLayerId, {'drawImmediate' : true});
+            this._dragStageLayer = new maptalks.VectorLayer(DRAG_STAGE_LAYER_ID, { 'drawImmediate' : true });
             map.addLayer(this._dragStageLayer);
         }
         //copy resources to avoid repeat resource loading.
         this._dragStageLayer._getRenderer()._resources = layer._getRenderer()._resources;
-    },
+    }
 
-    _dragging: function (param) {
+    _dragging(param) {
         var target = this.target;
         var map = target.getMap(),
             eventParam = map._parseEvent(param['domEvent']);
@@ -143,18 +154,18 @@ maptalks.Table.Drag = maptalks.Handler.extend({
         if (!this._lastPos) {
             this._lastPos = currentPos;
         }
-        var dragOffset = currentPos.substract(this._lastPos);
+        var coordOffset = currentPos.substract(this._lastPos);
 
         var axis = this._shadow.options['dragOnAxis'];
         if (axis === 'x') {
-            dragOffset.y = 0;
+            coordOffset.y = 0;
         } else if (axis === 'y') {
-            dragOffset.x = 0;
+            coordOffset.x = 0;
         }
         this._lastPos = currentPos;
-        this._shadow.translate(dragOffset);
+        this._shadow.translate(coordOffset);
 
-        eventParam['dragOffset'] = dragOffset;
+        eventParam['coordOffset'] = coordOffset;
         this._shadow._fireEvent('dragging', eventParam);
 
         /**
@@ -170,9 +181,9 @@ maptalks.Table.Drag = maptalks.Handler.extend({
          */
         target.fire('dragging', eventParam);
 
-    },
+    }
 
-    _endDrag: function (param) {
+    _endDrag(param) {
         var target = this.target,
             map = target.getMap();
         if (this._dragHandler) {
@@ -197,7 +208,7 @@ maptalks.Table.Drag = maptalks.Handler.extend({
             delete this._shadow;
         }
         if (this._shadowConnectors) {
-            map.getLayer(this.dragStageLayerId).removeGeometry(this._shadowConnectors);
+            map.getLayer(DRAG_STAGE_LAYER_ID).removeGeometry(this._shadowConnectors);
             delete this._shadowConnectors;
         }
         delete this._lastPos;
@@ -227,9 +238,17 @@ maptalks.Table.Drag = maptalks.Handler.extend({
          * @property {Event} domEvent                 - dom event
          */
         target.fire('dragend', eventParam);
-    },
+    }
+}
 
-    isDragging:function () {
+Table.addInitHook('addHandler', 'draggable', TableDragHandler);
+
+Table.include(/** @lends Table.prototype */ {
+    /**
+     * Whether the table is being dragged.
+     * @reutrn {Boolean}
+     */
+    isDragging() {
         if (!this._isDragging) {
             return false;
         }
@@ -237,5 +256,5 @@ maptalks.Table.Drag = maptalks.Handler.extend({
     }
 });
 
-maptalks.Table.addInitHook('addHandler', 'draggable', maptalks.Table.Drag);
+export default TableDragHandler;
 
