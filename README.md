@@ -3,13 +3,13 @@
 The maptalks.table.js plug-in is mainly used to create a table on the map container, which contains two types, respectively, custom tables and dynamic tables,
 The former manual editing data, the latter data is bound to a layer.
 
-##Feature
+## Feature
 1. Add interactive table for maps.
 2. Output table screenshot through "map.toDataURL()".
 3. Support drag and mouse event listener.
 
 
-##Installing
+## Installing
 ```javascript
 <script src="dist/maptalks.table.min.js">
 ```
@@ -20,16 +20,16 @@ or
 npm install maptalks-table
 ```
 
-##Demo
+## Demo
 
 ![Maptalks Table Demo](http://brucin.github.io/maptalks.table.js/demo/image/screenshot.png)
 
 [Maptalks Table Demo](http://brucin.github.io/maptalks.table.js/)
 
 
-#Table Class
-##API
-###new maptalks.Table(options);
+# Table Class
+## API
+### new maptalks.Table(options);
 ```javascript
 var myTalbe = new maptalks.Table({
     'title': 'title',
@@ -76,37 +76,37 @@ var myTalbe = new maptalks.Table({
 });
 ```
 Create table.
-###toJSON()
+### toJSON()
 ```javascript
 myTable.toJSON();
 ```
 Convert table object to JSON string.
-###initByJson(jsonStr)
+### initByJson(jsonStr)
 ```javascript
 myTable.initByJson(jsonStr);
 ```
 Initialize table from JSON string.
-###addTo(layer)
+### addTo(layer)
 ```javascript
 myTable.addTo(layer);
 ```
 Add table to maptalks's layer.
-###hide()
+### hide()
 ```javascript
 myTable.hide;
 ```
 Hide table.
-###show()
+### show()
 ```javascript
 myTable.show();
 ```
 Display table.
-###remove()
+### remove()
 ```javascript
 myTable.remove();
 ```
 Remove table from layer.
-###setCoordinates(coordiante)
+### setCoordinates(coordiante)
 ```javascript
 myTable.setCoordinates({
     'x': 121.489935,
@@ -114,74 +114,74 @@ myTable.setCoordinates({
 });
 ```
 Setting the position where table display.
-###setStartNum(num)
+### setStartNum(num)
 ```javascript
 myTable.setStartNum(6);
 ```
 Setting table start number。
-###animate(style, options, callback)
+### animate(style, options, callback)
 ```javascript
 myTable.animate(style, options, callback);
 ```
 Setting table animate show or hide effect.
-###getMap()
+### getMap()
 ```javascript
 myTable.getMap();
 ```
 Get this map which table add to.
-###getLayer()
+### getLayer()
 ```javascript
 myTable.getLayer();
 ```
 Get this layer which table add to.
-###getCenter()
+### getCenter()
 ```javascript
 myTable.getCenter();
 ```
 Get table coordinate.
-###setTableStyle(attr, value, isGlobal)
+### setTableStyle(attr, value, isGlobal)
 ```javascript
 myTable.setTableStyle('markerFill', '#00ff00', true);
 ```
 Change table style.
-###addRow(rowNum, data, below)
+### addRow(rowNum, data, below)
 ```javascript
 myTable.addRow(1, {name:'Tom', birth:'1990-1-1', age: 25, marry: 'true'}, true);
 ```
 Add new row.
-###updateRow(rowNum, data)
+### updateRow(rowNum, data)
 ```javascript
 myTable.addRow(1, {name:'Tom', birth:'1990-1-1', age: 25, marry: 'true'});
 ```
 Update row.
-###removeRow(rowNum)
+### removeRow(rowNum)
 ```javascript
 myTable.addRow(1);
 ```
 Remove row.
-###moveRow(rowNum, direction)
+### moveRow(rowNum, direction)
 ```javascript
 myTable.addRow(1, 'down');
 ```
 Move row up or down.
 
-###addCol(colNum, data, right)
+### addCol(colNum, data, right)
 ```javascript
 myTable.addCol(1, {header:'Name', dataIndex: 'name', type: 'string'}, true);
 ```
 Add new column.
-###removeCol(colNum)
+### removeCol(colNum)
 ```javascript
 myTable.removeCol(1);
 ```
 Remove column.
-###moveCol(colnum, direction)
+### moveCol(colnum, direction)
 ```javascript
 myTable.moveCol(1, 'left');
 ```
 Move column left or right.
 
-##Events
+## Events
 ***mouseover mouseout mousedown click dblclick contextmenu
 hide remove  dragstart dragend moving dragging
 symbolchange edittextstart edittextend orderchanged***
