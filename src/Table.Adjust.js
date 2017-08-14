@@ -259,19 +259,14 @@ Table.include(/** @lends Table.prototype */{
             row = this._tableRows[i];
             for (var j = 0; j < this._colNum; j++) {
                 cell = row[j];
-                symbol = cell.getSymbol();
+                symbol = cell.getBoxSymbol();
                 if (i === rowNum) {
-                    cell.options['boxMinHeight'] = newHeight;
-                    if (cell.options['boxMinHeight'] < symbol['markerHeight']) {
-                        symbol['markerHeight'] = cell.options['boxMinHeight'];
-                    }
                     symbol['markerDy'] += height / 2;
-                    symbol['textDy'] += height / 2;
+                    cell.setHeight(newHeight);
                 } else {
                     symbol['markerDy'] += height;
-                    symbol['textDy'] += height;
                 }
-                cell.setSymbol(symbol);
+                cell.setBoxSymbol(symbol);
             }
         }
         let eventParam = {};
@@ -293,18 +288,15 @@ Table.include(/** @lends Table.prototype */{
             if (!row) return;
             for (let j = columnNum, rowLength = row.length; j < rowLength; j++) {
                 cell = row[j];
-                symbol = cell.getSymbol();
+                symbol = cell.getBoxSymbol();
                 if (j === columnNum) {
-                    cell.options['boxMinWidth'] = newWidth;
-                    symbol['markerWidth'] = cell.options['boxMinWidth'];
-                    symbol['textWrapWidth'] = cell.options['boxMinWidth'];
+                    symbol['textWrapWidth'] = newWidth;
                     symbol['markerDx'] += width / 2;
-                    symbol['textDx'] += width / 2;
+                    cell.setWidth(newWidth);
                 } else {
                     symbol['markerDx'] += width;
-                    symbol['textDx'] += width;
                 }
-                cell.setSymbol(symbol);
+                cell.setBoxSymbol(symbol);
             }
         }
         let eventParam = {};

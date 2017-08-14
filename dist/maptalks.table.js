@@ -1049,38 +1049,6 @@ Table.include( /** @lends Table.prototype */{
                 'markerDy': cellOffset['dy'] || 0
             }
         };
-        // let options = {
-        //     'symbol': {
-        //         'markerLineColor': symbol['lineColor'] || symbol['markerLineColor'] || '#ffffff',
-        //         'markerLineWidth': 1,
-        //         'markerLineOpacity': 0.9,
-        //         'markerLineDasharray': null,
-        //         'markerFill': symbol['fill'] ||  symbol['markerFill']  || '#4e98dd',
-        //         'markerFillOpacity': 0.9,
-        //         'markerDx': cellOffset['dx'] || 0,
-        //         'markerDy': cellOffset['dy'] || 0,
-
-        //         'textFaceName': symbol['textFaceName'] || 'microsoft yahei',
-        //         'textSize': textSize,
-        //         'textFill': symbol['textFill'] || '#ff0000',
-        //         'textOpacity': 1,
-        //         'textSpacing': 30,
-        //         'textWrapWidth': size['width'],
-        //         'textWrapBefore': false,
-        //         'textLineSpacing': textLineSpacing,
-        //         'textHorizontalAlignment': symbol['textHorizontalAlignment'] || 'middle',
-        //         'textVerticalAlignment': symbol['textVerticalAlignment'] || 'middle',
-        //         'textWeight': symbol['textWeight'],
-        //         'textStyle': symbol['textStyle'],
-        //         'textDx': cellOffset['dx'] || 0,
-        //         'textDy': cellOffset['dy'] || 0
-        //     },
-        //     'boxPadding'   :   boxPadding,
-        //     'draggable': false,
-        //     'boxAutoSize': false,
-        //     'boxMinWidth': size['width'],
-        //     'boxMinHeight': size['height']
-        // };
         var coordinate = this.options['position'];
         return new maptalks.TextBox(content, coordinate, size['width'], size['height'], options);
     },
@@ -2719,19 +2687,14 @@ Table.include( /** @lends Table.prototype */{
             row = this._tableRows[i];
             for (var j = 0; j < this._colNum; j++) {
                 cell = row[j];
-                symbol = cell.getSymbol();
+                symbol = cell.getBoxSymbol();
                 if (i === rowNum) {
-                    cell.options['boxMinHeight'] = newHeight;
-                    if (cell.options['boxMinHeight'] < symbol['markerHeight']) {
-                        symbol['markerHeight'] = cell.options['boxMinHeight'];
-                    }
                     symbol['markerDy'] += height / 2;
-                    symbol['textDy'] += height / 2;
+                    cell.setHeight(newHeight);
                 } else {
                     symbol['markerDy'] += height;
-                    symbol['textDy'] += height;
                 }
-                cell.setSymbol(symbol);
+                cell.setBoxSymbol(symbol);
             }
         }
         var eventParam = {};
@@ -2754,18 +2717,15 @@ Table.include( /** @lends Table.prototype */{
             if (!row) return;
             for (var j = columnNum, rowLength = row.length; j < rowLength; j++) {
                 cell = row[j];
-                symbol = cell.getSymbol();
+                symbol = cell.getBoxSymbol();
                 if (j === columnNum) {
-                    cell.options['boxMinWidth'] = newWidth;
-                    symbol['markerWidth'] = cell.options['boxMinWidth'];
-                    symbol['textWrapWidth'] = cell.options['boxMinWidth'];
+                    symbol['textWrapWidth'] = newWidth;
                     symbol['markerDx'] += width / 2;
-                    symbol['textDx'] += width / 2;
+                    cell.setWidth(newWidth);
                 } else {
                     symbol['markerDx'] += width;
-                    symbol['textDx'] += width;
                 }
-                cell.setSymbol(symbol);
+                cell.setBoxSymbol(symbol);
             }
         }
         var eventParam = {};

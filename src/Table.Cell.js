@@ -33,38 +33,6 @@ Table.include(/** @lends Table.prototype */{
                 'markerDy': cellOffset['dy'] || 0
             }
         };
-        // let options = {
-        //     'symbol': {
-        //         'markerLineColor': symbol['lineColor'] || symbol['markerLineColor'] || '#ffffff',
-        //         'markerLineWidth': 1,
-        //         'markerLineOpacity': 0.9,
-        //         'markerLineDasharray': null,
-        //         'markerFill': symbol['fill'] ||  symbol['markerFill']  || '#4e98dd',
-        //         'markerFillOpacity': 0.9,
-        //         'markerDx': cellOffset['dx'] || 0,
-        //         'markerDy': cellOffset['dy'] || 0,
-
-        //         'textFaceName': symbol['textFaceName'] || 'microsoft yahei',
-        //         'textSize': textSize,
-        //         'textFill': symbol['textFill'] || '#ff0000',
-        //         'textOpacity': 1,
-        //         'textSpacing': 30,
-        //         'textWrapWidth': size['width'],
-        //         'textWrapBefore': false,
-        //         'textLineSpacing': textLineSpacing,
-        //         'textHorizontalAlignment': symbol['textHorizontalAlignment'] || 'middle',
-        //         'textVerticalAlignment': symbol['textVerticalAlignment'] || 'middle',
-        //         'textWeight': symbol['textWeight'],
-        //         'textStyle': symbol['textStyle'],
-        //         'textDx': cellOffset['dx'] || 0,
-        //         'textDy': cellOffset['dy'] || 0
-        //     },
-        //     'boxPadding'   :   boxPadding,
-        //     'draggable': false,
-        //     'boxAutoSize': false,
-        //     'boxMinWidth': size['width'],
-        //     'boxMinHeight': size['height']
-        // };
         let coordinate = this.options['position'];
         return new maptalks.TextBox(content, coordinate, size['width'], size['height'], options);
     },
