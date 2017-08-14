@@ -414,10 +414,9 @@ Table.include(/** @lends Table.prototype */{
     },
 
     _translateDy(cell, height) {
-        let symbol = cell.getSymbol();
-        symbol['markerDy'] += height;
-        symbol['textDy'] += height;
-        cell.setSymbol(symbol);
+        const boxSymbol = cell.getBoxSymbol();
+        boxSymbol['markerDy'] += height;
+        cell.setBoxSymbol(boxSymbol);
     }
 
 });

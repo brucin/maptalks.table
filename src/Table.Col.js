@@ -300,10 +300,9 @@ Table.include(/** @lends Table.prototype */{
     },
 
     _translateDx(cell, width) {
-        let symbol = cell.getSymbol();
-        symbol['markerDx'] += width;
-        symbol['textDx'] += width;
-        cell.setSymbol(symbol);
+        const boxSymbol = cell.getBoxSymbol();
+        boxSymbol['markerDx'] += width;
+        cell.setBoxSymbol(boxSymbol);
     }
 
 });

@@ -1642,10 +1642,9 @@ Table.include( /** @lends Table.prototype */{
         }
     },
     _translateDx: function _translateDx(cell, width) {
-        var symbol = cell.getSymbol();
-        symbol['markerDx'] += width;
-        symbol['textDx'] += width;
-        cell.setSymbol(symbol);
+        var boxSymbol = cell.getBoxSymbol();
+        boxSymbol['markerDx'] += width;
+        cell.setBoxSymbol(boxSymbol);
     }
 });
 
@@ -2362,10 +2361,9 @@ Table.include( /** @lends Table.prototype */{
         }
     },
     _translateDy: function _translateDy(cell, height) {
-        var symbol = cell.getSymbol();
-        symbol['markerDy'] += height;
-        symbol['textDy'] += height;
-        cell.setSymbol(symbol);
+        var boxSymbol = cell.getBoxSymbol();
+        boxSymbol['markerDy'] += height;
+        cell.setBoxSymbol(boxSymbol);
     }
 });
 
