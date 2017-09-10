@@ -203,21 +203,15 @@ Table.include(/** @lends Table.prototype */{
             row = this._tableRows[i];
             for (let j = 0; j < this._colNum; j++) {
                 cell = row[j];
-                symbol = cell.getSymbol();
+                symbol = cell.getBoxSymbol();
                 if (i === rowNum) {
-                    cell.options['boxMinHeight'] = height;
-                    if (cell.options['boxMinHeight'] < symbol['markerHeight']) {
-                        symbol['markerHeight'] = cell.options['boxMinHeight'];
-                    }
-                    symbol['textWrapWidth'] = height;
                     symbol['markerDy'] += heightOffset / 2;
-                    symbol['textDy'] += heightOffset / 2;
+                    cell.setHeight(height);
                 } else {
                     symbol['markerDy'] += heightOffset;
-                    symbol['textDy'] += heightOffset;
                 }
-                cell.setSymbol(symbol);
-                this.tableSymbols[i + '_' + j] = symbol;
+                cell.setBoxSymbol(symbol);
+                this.tableSymbols[i + '_' + j] = this._convertCellSymbol(cell);
             }
         }
         this.tableHeight += heightOffset;
@@ -273,7 +267,7 @@ Table.include(/** @lends Table.prototype */{
             cell._col = i;
             cell.dataIndex =  dataIndex;
             cols[i] = cell;
-            this.tableSymbols[index + '_' + i] = symbol;
+            this.tableSymbols[index + '_' + i] = this._convertCellSymbol(cell);
             if (this.options['dynamic'] && this.options['order'] && dataIndex === 'maptalks_order') {
                 coordinate = item['coordinate'];
                 if (coordinate) {
@@ -328,11 +322,10 @@ Table.include(/** @lends Table.prototype */{
 
         //调整行号
         for (let i = 0, len = sourceRow.length; i < len; i++) {
-            let sourceSymbol = sourceRow[i].getSymbol();
+            let sourceSymbol = sourceRow[i].getBoxSymbol();
             sourceRow[i]._row = targetRowNum;
             sourceSymbol['markerDy'] = sourceRowDy;
-            sourceSymbol['textDy'] = sourceRowDy;
-            sourceRow[i].setSymbol(sourceSymbol);
+            sourceRow[i].setBoxSymbol(sourceSymbol);
             if (this.options['order'] && this._columns[i]['dataIndex'] === 'maptalks_order') {
                 sourceRow[i].setContent(targetRowNum);
                 this._data[targetRowNum + start]['maptalks_order'] = targetRowNum;
@@ -340,11 +333,10 @@ Table.include(/** @lends Table.prototype */{
             }
         }
         for (let i = 0, len = targetRow.length; i < len; i++) {
-            let targetSymbol = targetRow[i].getSymbol();
+            let targetSymbol = targetRow[i].getBoxSymbol();
             targetRow[i]._row = sourceRowNum;
             targetSymbol['markerDy'] = targetRowDy;
-            targetSymbol['textDy'] = targetRowDy;
-            targetRow[i].setSymbol(targetSymbol);
+            targetRow[i].setBoxSymbol(targetSymbol);
             if (this.options['order'] && this._columns[i]['dataIndex'] === 'maptalks_order') {
                 targetRow[i].setContent(sourceRowNum);
                 this._data[sourceRowNum + start]['maptalks_order'] = sourceRowNum;

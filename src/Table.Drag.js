@@ -110,12 +110,6 @@ class TableDragHandler extends maptalks.Handler  {
         this._dragStageLayer.bringToFront().addGeometry(shadowConnectors.concat(shadow));
     }
 
-    _onTargetUpdated() {
-        if (this._shadow) {
-            this._shadow.setSymbol(this.target.getSymbol());
-        }
-    }
-
     _prepareDragStageLayer() {
         var map = this.target.getMap(),
             layer = this.target.getLayer();
@@ -140,7 +134,6 @@ class TableDragHandler extends maptalks.Handler  {
 
         if (!this._moved) {
             this._moved = true;
-            target.on('symbolchange', this._onTargetUpdated, this);
             this._prepareMap();
             this._isDragging = true;
             this._prepareShadow();
@@ -198,7 +191,6 @@ class TableDragHandler extends maptalks.Handler  {
         if (map) {
             eventParam = map._parseEvent(param['domEvent']);
         }
-        target.off('symbolchange', this._onTargetUpdated, this);
 
         var shadow = this._shadow;
         if (shadow) {

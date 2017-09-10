@@ -1,6 +1,6 @@
 {
   "name": "maptalks.table",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A Table plugin for maptalks.js.",
   "license": "MIT",
   "repository": {
@@ -46,7 +46,7 @@
     "maptalks": "^0.28.0-alpha.0"
   },
   "peerDependencies": {
-    "maptalks": "<2.0.0"
+    "maptalks": "^0.28.0"
   },
   "dependencies": {}
 }

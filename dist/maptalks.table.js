@@ -1,10 +1,10 @@
 /*!
- * maptalks.table v0.1.0
+ * maptalks.table v0.1.1
  * LICENSE : MIT
  * (c) 2016-2017 maptalks.org
  */
 /*!
- * requires maptalks@<2.0.0 
+ * requires maptalks@^0.28.0 
  */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -437,9 +437,9 @@ var Table = function (_maptalks$JSONAble) {
                 this._rowHeights[_i2] = 0;
             }
             if (this.options['header']) {
-                this._calculateHeaderHeight();
+                this._calculateHeaderSize();
             }
-            this._calculateRowHeight();
+            this._calculateRowSize();
         }
         for (var _i3 = 0; _i3 < this._rowHeights.length; _i3++) {
             this.tableHeight += this._rowHeights[_i3];
@@ -449,19 +449,20 @@ var Table = function (_maptalks$JSONAble) {
         }
     };
 
-    Table.prototype._calculateHeaderHeight = function _calculateHeaderHeight() {
+    Table.prototype._calculateHeaderSize = function _calculateHeaderSize() {
         for (var i = 0, len = this._columns.length; i < len; i++) {
             var col = this._columns[i];
             var header = col['header'];
             var style = this.getCellSymbol(0, i);
             var font = maptalks.StringUtil.getFont(style);
             var size = maptalks.StringUtil.stringLength(header, font);
-            this._colWidths[i] = size['width'];
-            this._rowHeights[0] = size['height'];
+            var textPadding = style['textPadding'];
+            this._colWidths[i] = size['width'] + textPadding[0] * 2;
+            this._rowHeights[0] = size['height'] + textPadding[1] * 2;
         }
     };
 
-    Table.prototype._calculateRowHeight = function _calculateRowHeight() {
+    Table.prototype._calculateRowSize = function _calculateRowSize() {
         var start = 0;
         if (this.options['header']) {
             start = 1;
@@ -474,22 +475,38 @@ var Table = function (_maptalks$JSONAble) {
                 var style = this.getCellSymbol(i + start, j);
                 var font = maptalks.StringUtil.getFont(style);
                 var size = maptalks.StringUtil.stringLength(content, font);
-                var maxWidth = this._colWidths[j],
-                    width = maxWidth;
-                if (size['width'] >= maxWidth) {
-                    var rowNum = Math.ceil(Math.ceil(size['width'] / maxWidth) / 4);
-                    width = maxWidth * rowNum;
-                }
+                var textPadding = style['textPadding'];
+                var maxWidth = this._colWidths[j];
+                var width = this._getPrefectWidth(size['width'], maxWidth, textPadding[0], 2);
+                // if (size['width'] > maxWidth) {
+                //     //split row num by max width, magic number 4 is prefect row number
+                //     let newRowWidth = Math.ceil(size['width'] / 4);
+                //     width = maxWidth * rowNum + textPadding[0];
+                // }
                 style['textWrapWidth'] = width;
                 this._colWidths[j] = width;
                 var result = maptalks.StringUtil.splitTextToRow(content, style);
                 var rowSize = result['size'],
-                    actualHeight = rowSize['height'];
+                    actualHeight = rowSize['height'] + textPadding[1] * 2;
                 if (this._rowHeights[i + start] < actualHeight) {
                     this._rowHeights[i + start] = actualHeight;
                 }
             }
         }
+    };
+
+    Table.prototype._getPrefectWidth = function _getPrefectWidth(width, maxWidth, widthPadding, index) {
+        while (width > maxWidth) {
+            var newWidth = Math.ceil(width / index);
+            if (newWidth > maxWidth) {
+                this._getPrefectWidth(width, newWidth, index++);
+            } else {
+                maxWidth += widthPadding * 2;
+                break;
+            }
+        }
+        width = maxWidth;
+        return width;
     };
 
     Table.prototype._initCellSymbol = function _initCellSymbol() {
@@ -499,13 +516,27 @@ var Table = function (_maptalks$JSONAble) {
         for (var i = 0; i < this._rowNum; i++) {
             if (i === 0 && this.options['header']) {
                 for (var j = 0; j < this._colNum; j++) {
-                    headerSymbol['textWrapWidth'] = this._colWidths[j];
-                    tableSymbols[i + '_' + j] = headerSymbol;
+                    tableSymbols[i + '_' + j] = {
+                        'lineColor': headerSymbol['lineColor'],
+                        'fill': headerSymbol['fill'],
+                        'textFaceName': headerSymbol['textFaceName'],
+                        'textSize': headerSymbol['textSize'],
+                        'textFill': headerSymbol['textFill'],
+                        'textWrapWidth': this._colWidths[j],
+                        'textPadding': headerSymbol['textPadding']
+                    };
                 }
             } else {
                 for (var _j = 0; _j < this._colNum; _j++) {
-                    defaultSymbol['textWrapWidth'] = this._colWidths[_j];
-                    tableSymbols[i + '_' + _j] = defaultSymbol;
+                    tableSymbols[i + '_' + _j] = {
+                        'lineColor': defaultSymbol['lineColor'],
+                        'fill': defaultSymbol['fill'],
+                        'textFaceName': defaultSymbol['textFaceName'],
+                        'textSize': defaultSymbol['textSize'],
+                        'textFill': defaultSymbol['textFill'],
+                        'textWrapWidth': this._colWidths[_j],
+                        'textPadding': defaultSymbol['textPadding']
+                    };
                 }
             }
         }
@@ -518,7 +549,7 @@ var Table = function (_maptalks$JSONAble) {
             var row = this._tableRows[i];
             if (row) {
                 for (var j = 0, rowLength = row.length; j < rowLength; j++) {
-                    tableSymbols[i + '_' + j] = row[j].getSymbol();
+                    tableSymbols[i + '_' + j] = this._convertCellSymbol(row[j]);
                 }
             }
         }
@@ -956,7 +987,7 @@ var Table = function (_maptalks$JSONAble) {
         var row = this._tableRows[rowNum];
         for (var j = 0, rowLength = row.length; j < rowLength; j++) {
             var cell = row[j];
-            var symbol = cell.getSymbol();
+            var symbol = cell.getTextStyle();
             var style = value;
             if (attr === 'textFont') {
                 style = value + ' ' + symbol['textSize'] + 'px ' + symbol['textFaceName'];
@@ -969,7 +1000,7 @@ var Table = function (_maptalks$JSONAble) {
         for (var i = 0, len = this._tableRows.length; i < len; i++) {
             var row = this._tableRows[i];
             var cell = row[colNum];
-            var symbol = cell.getSymbol();
+            var symbol = cell.getTextStyle();
             var style = value;
             if (attr === 'textFont') {
                 style = value + ' ' + symbol['textSize'] + 'px ' + symbol['textFaceName'];
@@ -979,18 +1010,12 @@ var Table = function (_maptalks$JSONAble) {
     };
 
     Table.prototype._setStyleToCell = function _setStyleToCell(cell, attr, value) {
-        var symbol = cell.getSymbol();
+        var symbol = cell.getTextStyle();
         if (attr === 'textAlign') {
-            symbol['textHorizontalAlignment'] = value;
-            if (value === 'left') {
-                symbol['textDx'] -= cell.getSize['width'] / 2;
-            } else if (value === 'right') {
-                symbol['textDx'] += cell.getSize['width'] / 2;
-            }
-            cell.setSymbol(symbol);
+            cell.setTextStyle(symbol);
         } else {
             symbol[attr] = value;
-            cell.setSymbol(symbol);
+            cell.setTextStyle(symbol);
         }
     };
 
@@ -1021,7 +1046,10 @@ Table.include( /** @lends Table.prototype */{
     createCell: function createCell(content, cellOffset, size, symbol) {
         var textSize = symbol['textSize'] || 12;
         var textLineSpacing = symbol['textLineSpacing'] || 8;
-        var textPadding = symbol['textPadding'] || [8, 8];
+        var textPadding = symbol['textPadding'] || [8, 2];
+        if (textPadding.width) {
+            textPadding = [parseInt(textPadding.width), parseInt(textPadding.height)];
+        }
         content = this._filterContent(content);
         var options = {
             'draggable': false,
@@ -1036,7 +1064,8 @@ Table.include( /** @lends Table.prototype */{
                     'textSize': textSize,
                     'textLineSpacing': textLineSpacing,
                     'textWeight': symbol['textWeight'],
-                    'textStyle': symbol['textStyle']
+                    'textStyle': symbol['textStyle'],
+                    'textWrapWidth': symbol['textWrapWidth']
                 }
             },
             'boxSymbol': {
@@ -1086,10 +1115,20 @@ Table.include( /** @lends Table.prototype */{
                 defaultSymbol = symbol;
             }
         }
-        if (!defaultSymbol['textPadding']) {
-            defaultSymbol['textPadding'] = [8, 8];
+        var textPadding = defaultSymbol['textPadding'];
+        if (textPadding) {
+            if (textPadding.width) {
+                textPadding = [parseInt(textPadding.width), parseInt(textPadding.height)];
+            }
+        } else {
+            textPadding = [8, 2];
         }
+        defaultSymbol['textPadding'] = textPadding;
         return defaultSymbol;
+    },
+
+    _convertCellSymbol: function _convertCellSymbol(cell) {
+        return cell.getSymbol();
     },
 
     getRowNum: function getRowNum(cell) {
@@ -1117,8 +1156,7 @@ Table.include( /** @lends Table.prototype */{
         var table = this['table'];
         var cell = this['cell'];
         table.fire('symbolchange', event);
-        var symbol = this['cell'].getSymbol();
-        table.tableSymbols[cell['_row'] + '_' + cell['_col']] = table.convertCellToSaveSymbol(symbol);
+        table.tableSymbols[cell['_row'] + '_' + cell['_col']] = table._convertCellSymbol(cell);
     },
 
     _cellEditTextEnd: function _cellEditTextEnd(event) {
@@ -1141,21 +1179,6 @@ Table.include( /** @lends Table.prototype */{
         }
         this['table'].fire('edittableend', event);
         this['table'].options['editing'] = false;
-    },
-
-    convertCellToSaveSymbol: function convertCellToSaveSymbol(symbol) {
-        var saveSymbol = {
-            fill: symbol['markerFill'],
-            lineColor: symbol['markerLineColor'],
-            textFaceName: symbol['textFaceName'],
-            textFill: symbol['textFill'],
-            textSize: symbol['textSize'],
-            textWrapWidth: symbol['textWrapWidth'],
-            textHorizontalAlignment: symbol['textHorizontalAlignment'],
-            textWeight: symbol['textWeight'],
-            textStyle: symbol['textStyle']
-        };
-        return saveSymbol;
     },
 
     _addEditEventToCell: function _addEditEventToCell(cell) {
@@ -1190,14 +1213,7 @@ Table.include( /** @lends Table.prototype */{
         var _this = this;
 
         //设置label属性
-        var cellSymbol = cell.getSymbol();
-        var options = {
-            'symbol': this._convertCellSymbolToNumberSymbol(cellSymbol),
-            'draggable': false,
-            'boxAutoSize': false,
-            'boxMinWidth': 20,
-            'boxMinHeight': 20
-        };
+        var options = this._convertCellSymbolToNumberOptions(cell);
         //创建label
         var num = cell.getContent();
         var numberLabel = new maptalks.Label(num, coordinate, options);
@@ -1224,8 +1240,9 @@ Table.include( /** @lends Table.prototype */{
             if (_coordiante) numberLabel.setCoordinates(new maptalks.Coordinate(_coordiante.x, _coordiante.y));
         }, this);
         cell.on('symbolchange', function () {
-            var symbol = _this._convertCellSymbolToNumberSymbol(cell.getSymbol());
-            numberLabel.setSymbol(symbol);
+            var options = _this._convertCellSymbolToNumberOptions(cell);
+            numberLabel.setBoxStyle(options.boxStyle);
+            numberLabel.setTextSymbol(options.textSymbol);
         }, this);
         cell.on('positionchanged contentchange', function () {
             var number = cell.getContent();
@@ -1255,32 +1272,33 @@ Table.include( /** @lends Table.prototype */{
         }
     },
 
-    _convertCellSymbolToNumberSymbol: function _convertCellSymbolToNumberSymbol(cellSymbol) {
-        var symbol = {
-            'markerType': 'ellipse',
-            'markerLineColor': '#ffffff', //cellSymbol['markerLineColor']||'#ffffff',
-            'markerLineWidth': 0, //cellSymbol['markerLineWidth']||1,
-            'markerLineOpacity': cellSymbol['markerLineOpacity'] || 0,
-            'markerFill': cellSymbol['markerFill'] || '#4e98dd',
-            'markerFillOpacity': cellSymbol['markerFillOpacity'] || 1,
-            'markerDx': 0,
-            'markerDy': 0,
-            'markerHeight': 30,
-            'markerWidth': 30,
-
-            'textFaceName': cellSymbol['textFaceName'] || 'microsoft yahei',
-            'textSize': cellSymbol['textSize'] || 12,
-            'textFill': cellSymbol['textFill'] || '#ff0000',
-            'textOpacity': cellSymbol['textOpacity'] || 1,
-            'textSpacing': cellSymbol['textSpacing'] || 0,
-            'textWrapBefore': false,
-            'textLineSpacing': cellSymbol['textLineSpacing'] || 0,
-            'textHorizontalAlignment': cellSymbol['textHorizontalAlignment'] || 'middle',
-            'textVerticalAlignment': cellSymbol['textVerticalAlignment'] || 'middle',
-            'textDx': 0,
-            'textDy': 0
+    _convertCellSymbolToNumberOptions: function _convertCellSymbolToNumberOptions(cell) {
+        var cellTextSymbol = cell.getSymbol();
+        var textSymbol = {
+            'textFaceName': cellTextSymbol['textFaceName'] || 'microsoft yahei',
+            'textFill': cellTextSymbol['textFill'] || '#ff0000',
+            'textSize': cellTextSymbol['textSize'],
+            'textLineSpacing': cellTextSymbol['textLineSpacing'],
+            'textWeight': cellTextSymbol['textWeight'],
+            'textStyle': cellTextSymbol['textStyle']
         };
-        return symbol;
+        var cellBoxStyle = cell.getBoxSymbol();
+        var boxStyle = {
+            'padding': cellTextSymbol['padding'],
+            'minWidth': 20,
+            'minHeight': 20,
+            'symbol': {
+                'markerType': 'ellipse',
+                'markerFill': cellBoxStyle['markerFill'] || '#4e98dd',
+                'markerFillOpacity': cellBoxStyle['markerFillOpacity'] || 1,
+                'markerLineColor': '#ffffff',
+                'markerLineWidth': 0
+            }
+        };
+        return {
+            'boxStyle': boxStyle,
+            'textSymbol': textSymbol
+        };
     },
 
     _filterContent: function _filterContent(content) {
@@ -1348,8 +1366,8 @@ Table.include( /** @lends Table.prototype */{
                         if (this._adjustCols) {
                             colLine = this._adjustCols[cell._col];
                             size = cell.getSize();
-                            symbol = cell.getSymbol();
-                            dx = symbol['textDx'];
+                            symbol = cell.getBoxSymbol();
+                            dx = symbol['markerDx'];
                             upPoint = map.locate(startPoint, map.pixelToDistance(size['width'] / 2 + dx, 0), map.pixelToDistance(0, size['height'] / 2));
                             downPoint = map.locate(upPoint, 0, -map.pixelToDistance(0, this.tableHeight));
                             colLine.setCoordinates([upPoint, downPoint]);
@@ -1420,18 +1438,14 @@ Table.include( /** @lends Table.prototype */{
             if (!row) return;
             for (var j = colNum, rowLength = row.length; j < rowLength; j++) {
                 cell = row[j];
-                symbol = cell.getSymbol();
+                symbol = cell.getBoxSymbol();
                 if (j === colNum) {
-                    cell.options['boxMinWidth'] = newWidth;
-                    symbol['markerWidth'] = cell.options['boxMinWidth'];
-                    symbol['textWrapWidth'] = cell.options['boxMinWidth'];
                     symbol['markerDx'] += widthOffset / 2;
-                    symbol['textDx'] += widthOffset / 2;
+                    cell.setWidth(newWidth);
                 } else {
                     symbol['markerDx'] += widthOffset;
-                    symbol['textDx'] += widthOffset;
                 }
-                cell.setSymbol(symbol);
+                cell.setBoxSymbol(symbol);
             }
         }
         this.tableWidth += widthOffset;
@@ -1552,16 +1566,14 @@ Table.include( /** @lends Table.prototype */{
         for (var i = 0, len = this._tableRows.length; i < len; i++) {
             row = this._tableRows[i];
             if (!row) return;
-            sourceCellSymbol = row[sourceColNum].getSymbol();
+            sourceCellSymbol = row[sourceColNum].getBoxSymbol();
             sourceCellSymbol['markerDx'] = sourceColDx;
-            sourceCellSymbol['textDx'] = sourceColDx;
-            row[sourceColNum].setSymbol(sourceCellSymbol);
+            row[sourceColNum].setBoxSymbol(sourceCellSymbol);
             row[sourceColNum]._col = targetColNum;
 
-            targetCellSymbol = row[targetColNum].getSymbol();
+            targetCellSymbol = row[targetColNum].getBoxSymbol();
             targetCellSymbol['markerDx'] = targetColDx;
-            targetCellSymbol['textDx'] = targetColDx;
-            row[targetColNum].setSymbol(targetCellSymbol);
+            row[targetColNum].setBoxSymbol(targetCellSymbol);
             row[targetColNum]._col = sourceColNum;
             temp = row[sourceColNum];
             row[sourceColNum] = row[targetColNum];
@@ -1599,8 +1611,8 @@ Table.include( /** @lends Table.prototype */{
                     if (this._adjustCols) {
                         colLine = this._adjustCols[j];
                         size = cell.getSize();
-                        symbol = cell.getSymbol();
-                        dx = symbol['textDx'];
+                        symbol = cell.getBoxSymbol();
+                        dx = symbol['markerDx'];
                         upPoint = map.locate(startPoint, map.pixelToDistance(size['width'] / 2 + dx, 0), map.pixelToDistance(0, size['height'] / 2));
                         downPoint = map.locate(upPoint, 0, -map.pixelToDistance(0, this.tableHeight));
                         colLine.setCoordinates([upPoint, downPoint]);
@@ -1730,12 +1742,6 @@ var TableDragHandler = function (_maptalks$Handler) {
         this._dragStageLayer.bringToFront().addGeometry(shadowConnectors.concat(shadow));
     };
 
-    TableDragHandler.prototype._onTargetUpdated = function _onTargetUpdated() {
-        if (this._shadow) {
-            this._shadow.setSymbol(this.target.getSymbol());
-        }
-    };
-
     TableDragHandler.prototype._prepareDragStageLayer = function _prepareDragStageLayer() {
         var map = this.target.getMap(),
             layer = this.target.getLayer();
@@ -1760,7 +1766,6 @@ var TableDragHandler = function (_maptalks$Handler) {
 
         if (!this._moved) {
             this._moved = true;
-            target.on('symbolchange', this._onTargetUpdated, this);
             this._prepareMap();
             this._isDragging = true;
             this._prepareShadow();
@@ -1817,7 +1822,6 @@ var TableDragHandler = function (_maptalks$Handler) {
         if (map) {
             eventParam = map._parseEvent(param['domEvent']);
         }
-        target.off('symbolchange', this._onTargetUpdated, this);
 
         var shadow = this._shadow;
         if (shadow) {
@@ -2112,21 +2116,15 @@ Table.include( /** @lends Table.prototype */{
             row = this._tableRows[i];
             for (var j = 0; j < this._colNum; j++) {
                 cell = row[j];
-                symbol = cell.getSymbol();
+                symbol = cell.getBoxSymbol();
                 if (i === rowNum) {
-                    cell.options['boxMinHeight'] = height;
-                    if (cell.options['boxMinHeight'] < symbol['markerHeight']) {
-                        symbol['markerHeight'] = cell.options['boxMinHeight'];
-                    }
-                    symbol['textWrapWidth'] = height;
                     symbol['markerDy'] += heightOffset / 2;
-                    symbol['textDy'] += heightOffset / 2;
+                    cell.setHeight(height);
                 } else {
                     symbol['markerDy'] += heightOffset;
-                    symbol['textDy'] += heightOffset;
                 }
-                cell.setSymbol(symbol);
-                this.tableSymbols[i + '_' + j] = symbol;
+                cell.setBoxSymbol(symbol);
+                this.tableSymbols[i + '_' + j] = this._convertCellSymbol(cell);
             }
         }
         this.tableHeight += heightOffset;
@@ -2188,7 +2186,7 @@ Table.include( /** @lends Table.prototype */{
             cell._col = i;
             cell.dataIndex = dataIndex;
             cols[i] = cell;
-            this.tableSymbols[index + '_' + i] = symbol;
+            this.tableSymbols[index + '_' + i] = this._convertCellSymbol(cell);
             if (this.options['dynamic'] && this.options['order'] && dataIndex === 'maptalks_order') {
                 coordinate = item['coordinate'];
                 if (coordinate) {
@@ -2243,11 +2241,10 @@ Table.include( /** @lends Table.prototype */{
 
         //调整行号
         for (var i = 0, len = sourceRow.length; i < len; i++) {
-            var sourceSymbol = sourceRow[i].getSymbol();
+            var sourceSymbol = sourceRow[i].getBoxSymbol();
             sourceRow[i]._row = targetRowNum;
             sourceSymbol['markerDy'] = sourceRowDy;
-            sourceSymbol['textDy'] = sourceRowDy;
-            sourceRow[i].setSymbol(sourceSymbol);
+            sourceRow[i].setBoxSymbol(sourceSymbol);
             if (this.options['order'] && this._columns[i]['dataIndex'] === 'maptalks_order') {
                 sourceRow[i].setContent(targetRowNum);
                 this._data[targetRowNum + start]['maptalks_order'] = targetRowNum;
@@ -2255,11 +2252,10 @@ Table.include( /** @lends Table.prototype */{
             }
         }
         for (var _i2 = 0, _len = targetRow.length; _i2 < _len; _i2++) {
-            var targetSymbol = targetRow[_i2].getSymbol();
+            var targetSymbol = targetRow[_i2].getBoxSymbol();
             targetRow[_i2]._row = sourceRowNum;
             targetSymbol['markerDy'] = targetRowDy;
-            targetSymbol['textDy'] = targetRowDy;
-            targetRow[_i2].setSymbol(targetSymbol);
+            targetRow[_i2].setBoxSymbol(targetSymbol);
             if (this.options['order'] && this._columns[_i2]['dataIndex'] === 'maptalks_order') {
                 targetRow[_i2].setContent(sourceRowNum);
                 this._data[sourceRowNum + start]['maptalks_order'] = sourceRowNum;
@@ -2740,6 +2736,6 @@ exports.Table = Table;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-typeof console !== 'undefined' && console.log('maptalks.table v0.1.0, requires maptalks@<2.0.0.');
+typeof console !== 'undefined' && console.log('maptalks.table v0.1.1, requires maptalks@^0.28.0.');
 
 })));

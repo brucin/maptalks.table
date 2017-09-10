@@ -45,8 +45,8 @@ Table.include(/** @lends Table.prototype */{
                         if (this._adjustCols) {
                             colLine = this._adjustCols[cell._col];
                             size = cell.getSize();
-                            symbol = cell.getSymbol();
-                            dx = symbol['textDx'];
+                            symbol = cell.getBoxSymbol();
+                            dx = symbol['markerDx'];
                             upPoint = map.locate(startPoint, map.pixelToDistance(size['width'] / 2 + dx, 0), map.pixelToDistance(0, size['height'] / 2));
                             downPoint = map.locate(upPoint, 0, -map.pixelToDistance(0, this.tableHeight));
                             colLine.setCoordinates([upPoint, downPoint]);
@@ -121,18 +121,14 @@ Table.include(/** @lends Table.prototype */{
             if (!row) return;
             for (let j = colNum, rowLength = row.length; j < rowLength; j++) {
                 cell = row[j];
-                symbol = cell.getSymbol();
+                symbol = cell.getBoxSymbol();
                 if (j === colNum) {
-                    cell.options['boxMinWidth'] = newWidth;
-                    symbol['markerWidth'] = cell.options['boxMinWidth'];
-                    symbol['textWrapWidth'] = cell.options['boxMinWidth'];
                     symbol['markerDx'] += widthOffset / 2;
-                    symbol['textDx'] += widthOffset / 2;
+                    cell.setWidth(newWidth);
                 } else {
                     symbol['markerDx'] += widthOffset;
-                    symbol['textDx'] += widthOffset;
                 }
-                cell.setSymbol(symbol);
+                cell.setBoxSymbol(symbol);
             }
         }
         this.tableWidth += widthOffset;
@@ -247,16 +243,14 @@ Table.include(/** @lends Table.prototype */{
         for (let i = 0, len = this._tableRows.length; i < len; i++) {
             row = this._tableRows[i];
             if (!row) return;
-            sourceCellSymbol = row[sourceColNum].getSymbol();
+            sourceCellSymbol = row[sourceColNum].getBoxSymbol();
             sourceCellSymbol['markerDx'] = sourceColDx;
-            sourceCellSymbol['textDx'] = sourceColDx;
-            row[sourceColNum].setSymbol(sourceCellSymbol);
+            row[sourceColNum].setBoxSymbol(sourceCellSymbol);
             row[sourceColNum]._col = targetColNum;
 
-            targetCellSymbol = row[targetColNum].getSymbol();
+            targetCellSymbol = row[targetColNum].getBoxSymbol();
             targetCellSymbol['markerDx'] = targetColDx;
-            targetCellSymbol['textDx'] = targetColDx;
-            row[targetColNum].setSymbol(targetCellSymbol);
+            row[targetColNum].setBoxSymbol(targetCellSymbol);
             row[targetColNum]._col = sourceColNum;
             temp = row[sourceColNum];
             row[sourceColNum] = row[targetColNum];
@@ -288,8 +282,8 @@ Table.include(/** @lends Table.prototype */{
                     if (this._adjustCols) {
                         colLine = this._adjustCols[j];
                         size = cell.getSize();
-                        symbol = cell.getSymbol();
-                        dx = symbol['textDx'];
+                        symbol = cell.getBoxSymbol();
+                        dx = symbol['markerDx'];
                         upPoint = map.locate(startPoint, map.pixelToDistance(size['width'] / 2 + dx, 0), map.pixelToDistance(0, size['height'] / 2));
                         downPoint = map.locate(upPoint, 0, -map.pixelToDistance(0, this.tableHeight));
                         colLine.setCoordinates([upPoint, downPoint]);

@@ -359,9 +359,9 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
                 this._rowHeights[i] = 0;
             }
             if (this.options['header']) {
-                this._calculateHeaderHeight();
+                this._calculateHeaderSize();
             }
-            this._calculateRowHeight();
+            this._calculateRowSize();
         }
         for (let i = 0; i < this._rowHeights.length; i++) {
             this.tableHeight += this._rowHeights[i];
@@ -371,19 +371,20 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         }
     }
 
-    _calculateHeaderHeight() {
+    _calculateHeaderSize() {
         for (let i = 0, len = this._columns.length; i < len; i++) {
             let col = this._columns[i];
             let header = col['header'];
             let style =  this.getCellSymbol(0, i);
             let font = maptalks.StringUtil.getFont(style);
             let size = maptalks.StringUtil.stringLength(header, font);
-            this._colWidths[i] = size['width'];
-            this._rowHeights[0] = size['height'];
+            let textPadding = style['textPadding'];
+            this._colWidths[i] = size['width'] + textPadding[0] * 2;
+            this._rowHeights[0] = size['height'] + textPadding[1] * 2;
         }
     }
 
-    _calculateRowHeight() {
+    _calculateRowSize() {
         let start = 0;
         if (this.options['header']) {
             start = 1;
@@ -396,20 +397,37 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
                 let style =  this.getCellSymbol(i + start, j);
                 let font = maptalks.StringUtil.getFont(style);
                 let size = maptalks.StringUtil.stringLength(content, font);
-                let maxWidth = this._colWidths[j], width = maxWidth;
-                if (size['width'] >= maxWidth) {
-                    let rowNum = Math.ceil(Math.ceil(size['width'] / maxWidth) / 4);
-                    width = maxWidth * rowNum;
-                }
+                let textPadding = style['textPadding'];
+                let maxWidth = this._colWidths[j];
+                let width = this._getPrefectWidth(size['width'], maxWidth, textPadding[0], 2);
+                // if (size['width'] > maxWidth) {
+                //     //split row num by max width, magic number 4 is prefect row number
+                //     let newRowWidth = Math.ceil(size['width'] / 4);
+                //     width = maxWidth * rowNum + textPadding[0];
+                // }
                 style['textWrapWidth'] = width;
                 this._colWidths[j] = width;
                 let result = maptalks.StringUtil.splitTextToRow(content, style);
-                let rowSize = result['size'], actualHeight = rowSize['height'];
+                let rowSize = result['size'], actualHeight = rowSize['height'] + textPadding[1] * 2;
                 if (this._rowHeights[i + start] < actualHeight) {
                     this._rowHeights[i + start] = actualHeight;
                 }
             }
         }
+    }
+
+    _getPrefectWidth(width, maxWidth, widthPadding, index) {
+        while(width > maxWidth) {
+            let newWidth = Math.ceil(width/index);
+            if(newWidth > maxWidth) {
+                this._getPrefectWidth(width, newWidth, index++);
+            } else {
+                maxWidth += widthPadding * 2;
+                break;
+            }
+        }
+        width = maxWidth;
+        return width;
     }
 
     _initCellSymbol() {
@@ -419,13 +437,27 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         for (let i = 0; i < this._rowNum; i++) {
             if (i === 0 && this.options['header']) {
                 for (let j = 0; j < this._colNum; j++) {
-                    headerSymbol['textWrapWidth'] = this._colWidths[j];
-                    tableSymbols[i + '_' + j] = headerSymbol;
+                    tableSymbols[i + '_' + j] = {
+                        'lineColor': headerSymbol['lineColor'],
+                        'fill': headerSymbol['fill'],
+                        'textFaceName': headerSymbol['textFaceName'],
+                        'textSize': headerSymbol['textSize'],
+                        'textFill': headerSymbol['textFill'],
+                        'textWrapWidth': this._colWidths[j],
+                        'textPadding': headerSymbol['textPadding']
+                    };
                 }
             } else {
                 for (let j = 0; j < this._colNum; j++) {
-                    defaultSymbol['textWrapWidth'] = this._colWidths[j];
-                    tableSymbols[i + '_' + j] = defaultSymbol;
+                    tableSymbols[i + '_' + j] = {
+                        'lineColor': defaultSymbol['lineColor'],
+                        'fill': defaultSymbol['fill'],
+                        'textFaceName': defaultSymbol['textFaceName'],
+                        'textSize': defaultSymbol['textSize'],
+                        'textFill': defaultSymbol['textFill'],
+                        'textWrapWidth': this._colWidths[j],
+                        'textPadding': defaultSymbol['textPadding']
+                    };
                 }
             }
         }
@@ -438,7 +470,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
             let row = this._tableRows[i];
             if (row) {
                 for (let j = 0, rowLength = row.length; j < rowLength; j++) {
-                    tableSymbols[i + '_' + j] = row[j].getSymbol();
+                    tableSymbols[i + '_' + j] = this._convertCellSymbol(row[j]);
                 }
 
             }
@@ -870,7 +902,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         let row = this._tableRows[rowNum];
         for (let j = 0, rowLength = row.length; j < rowLength; j++) {
             let cell = row[j];
-            let symbol = cell.getSymbol();
+            let symbol = cell.getTextStyle();
             let style = value;
             if (attr === 'textFont') {
                 style = value + ' ' + symbol['textSize'] + 'px ' + symbol['textFaceName'];
@@ -883,7 +915,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         for (let i = 0, len = this._tableRows.length; i < len; i++) {
             let row = this._tableRows[i];
             let cell = row[colNum];
-            let symbol = cell.getSymbol();
+            let symbol = cell.getTextStyle();
             let style = value;
             if (attr === 'textFont') {
                 style = value + ' ' + symbol['textSize'] + 'px ' + symbol['textFaceName'];
@@ -893,18 +925,12 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
     }
 
     _setStyleToCell(cell, attr, value) {
-        let symbol = cell.getSymbol();
+        let symbol = cell.getTextStyle();
         if (attr === 'textAlign') {
-            symbol['textHorizontalAlignment'] = value;
-            if (value === 'left') {
-                symbol['textDx'] -= cell.getSize['width'] / 2;
-            } else if (value === 'right') {
-                symbol['textDx'] += cell.getSize['width'] / 2;
-            }
-            cell.setSymbol(symbol);
+            cell.setTextStyle(symbol);
         } else {
             symbol[attr] = value;
-            cell.setSymbol(symbol);
+            cell.setTextStyle(symbol);
         }
     }
 
