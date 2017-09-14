@@ -925,12 +925,14 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
     }
 
     _setStyleToCell(cell, attr, value) {
-        let symbol = cell.getTextStyle();
+        let symbol = cell.getSymbol();
         if (attr === 'textAlign') {
-            cell.setTextStyle(symbol);
+            let textStyle = cell.getTextStyle();
+            textStyle['horizontalAlignment'] = value;
+            cell.setTextStyle(textStyle);
         } else {
             symbol[attr] = value;
-            cell.setTextStyle(symbol);
+            cell.setSymbol(symbol);
         }
     }
 

@@ -1010,12 +1010,14 @@ var Table = function (_maptalks$JSONAble) {
     };
 
     Table.prototype._setStyleToCell = function _setStyleToCell(cell, attr, value) {
-        var symbol = cell.getTextStyle();
+        var symbol = cell.getSymbol();
         if (attr === 'textAlign') {
-            cell.setTextStyle(symbol);
+            var textStyle = cell.getTextStyle();
+            textStyle['horizontalAlignment'] = value;
+            cell.setTextStyle(textStyle);
         } else {
             symbol[attr] = value;
-            cell.setTextStyle(symbol);
+            cell.setSymbol(symbol);
         }
     };
 
@@ -1273,25 +1275,24 @@ Table.include( /** @lends Table.prototype */{
     },
 
     _convertCellSymbolToNumberOptions: function _convertCellSymbolToNumberOptions(cell) {
-        var cellTextSymbol = cell.getSymbol();
+        var cellSymbol = cell.getSymbol();
         var textSymbol = {
-            'textFaceName': cellTextSymbol['textFaceName'] || 'microsoft yahei',
-            'textFill': cellTextSymbol['textFill'] || '#ff0000',
-            'textSize': cellTextSymbol['textSize'],
-            'textLineSpacing': cellTextSymbol['textLineSpacing'],
-            'textWeight': cellTextSymbol['textWeight'],
-            'textStyle': cellTextSymbol['textStyle']
+            'textFaceName': cellSymbol['textFaceName'] || 'microsoft yahei',
+            'textFill': cellSymbol['textFill'] || '#ff0000',
+            'textSize': cellSymbol['textSize'],
+            'textLineSpacing': cellSymbol['textLineSpacing'],
+            'textWeight': cellSymbol['textWeight'],
+            'textStyle': cellSymbol['textStyle']
         };
-        var cellBoxStyle = cell.getBoxSymbol();
         var boxStyle = {
-            'padding': cellTextSymbol['padding'],
-            'minWidth': 20,
-            'minHeight': 20,
+            'padding': [2, 2],
+            'minWidth': cellSymbol['textSize'],
+            'minHeight': cellSymbol['textSize'],
             'symbol': {
                 'markerType': 'ellipse',
-                'markerFill': cellBoxStyle['markerFill'] || '#4e98dd',
-                'markerFillOpacity': cellBoxStyle['markerFillOpacity'] || 1,
-                'markerLineColor': '#ffffff',
+                'markerFill': cellSymbol['markerFill'] || '#4e98dd',
+                'markerFillOpacity': cellSymbol['markerFillOpacity'] || 1,
+                'markerLineColor': cellSymbol['markerLineColor'] || '#ffffff',
                 'markerLineWidth': 0
             }
         };
