@@ -79,14 +79,14 @@ Table.include(/** @lends Table.prototype */{
                 textPadding = [parseInt(textPadding.width), parseInt(textPadding.height)];
             }
         } else {
-            textPadding = [8, 2];
+            textPadding = [12, 8];
         }
         defaultSymbol['textPadding'] = textPadding;
         return defaultSymbol;
     },
 
     _convertCellSymbol: function(cell) {
-        return cell.getSymbol();
+        return this.getCellSymbol(cell._row, cell._col);
     },
 
     getRowNum: function (cell) {
@@ -180,7 +180,9 @@ Table.include(/** @lends Table.prototype */{
         let options = this._convertCellSymbolToNumberOptions(cell)
         //创建label
         let num = cell.getContent();
-        let numberLabel = new maptalks.Label(num, coordinate, options);
+        let cellSymbol = cell.getSymbol();
+        let textWidth = cellSymbol['textSize'] || 12;
+        let numberLabel = new maptalks.TextBox(num, coordinate, textWidth + 6, textWidth + 6, options);
         this.getLayer().addGeometry(numberLabel);
         this._geometryNumLabels.push(numberLabel);
         let me = this;
@@ -205,8 +207,8 @@ Table.include(/** @lends Table.prototype */{
         }, this);
         cell.on('symbolchange', () => {
             let options = this._convertCellSymbolToNumberOptions(cell);
-            numberLabel.setBoxStyle(options.boxStyle);
-            numberLabel.setTextSymbol(options.textSymbol);
+            numberLabel.setBoxSymbol(options.boxSymbol);
+            numberLabel.setTextStyle(options.textStyle);
         }, this);
         cell.on('positionchanged contentchange', () => {
             let number = cell.getContent();
@@ -238,29 +240,30 @@ Table.include(/** @lends Table.prototype */{
 
     _convertCellSymbolToNumberOptions: function (cell) {
         let cellSymbol = cell.getSymbol();
-        let textSymbol = {
-            'textFaceName' : cellSymbol['textFaceName'] || 'microsoft yahei',
-            'textFill' : cellSymbol['textFill'] || '#ff0000',
-            'textSize' : cellSymbol['textSize'],
-            'textLineSpacing' : cellSymbol['textLineSpacing'],
-            'textWeight' : cellSymbol['textWeight'],
-            'textStyle' : cellSymbol['textStyle']
+        let boxSymbol = {
+            'markerType' : 'ellipse',
+            'markerFill' : cellSymbol['markerFill'] || '#4e98dd',
+            'markerFillOpacity' : cellSymbol['markerFillOpacity'] || 1,
+            'markerLineColor' : cellSymbol['markerLineColor'] || '#ffffff',
+            'markerLineWidth' : 0
         };
-        let boxStyle = {
+        let textStyle = {
+            'wrap': false,
             'padding' : [2,2],
-            'minWidth' : cellSymbol['textSize'],
-            'minHeight' : cellSymbol['textSize'],
+            'verticalAlignment' : 'top',
+            'horizontalAlignment' : 'middle',
             'symbol' : {
-              'markerType' : 'ellipse',
-              'markerFill' : cellSymbol['markerFill'] || '#4e98dd',
-              'markerFillOpacity' : cellSymbol['markerFillOpacity'] || 1,
-              'markerLineColor' : cellSymbol['markerLineColor'] || '#ffffff',
-              'markerLineWidth' : 0
+                'textFaceName' : cellSymbol['textFaceName'] || 'microsoft yahei',
+                'textFill' : cellSymbol['textFill'] || '#ff0000',
+                'textSize' : cellSymbol['textSize'],
+                'textLineSpacing' : cellSymbol['textLineSpacing'],
+                'textWeight' : cellSymbol['textWeight'],
+                'textStyle' : cellSymbol['textStyle']
             }
         };
         return {
-            'boxStyle' : boxStyle,
-            'textSymbol' : textSymbol
+            'textStyle' : textStyle,
+            'boxSymbol' : boxSymbol
         };
     },
 

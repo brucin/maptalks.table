@@ -186,6 +186,14 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         };
     }
 
+    getSize() {
+        const map = this.getMap();
+        if (!map) {
+            return null;
+        }
+        return new maptalks.Size(this.tableWidth, this.tableHeight);
+    }
+
     _dataToJSON() {
         let result = [];
         if (this.options['dynamic'] && this._data && this._data.length > 0) {
@@ -531,6 +539,10 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
     }
 
     getAllCells() {
+        return this.getCells().concat(this.getNumLabels());;
+    }
+
+    getCells() {
         var cells = [], row;
         for (var i = 0, len = this._tableRows.length; i < len; i++) {
             row = this._tableRows[i];
@@ -540,10 +552,11 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
                 }
             }
         }
-        if (this.options['dynamic'] && this.options['order']) {
-            cells = cells.concat(this._geometryNumLabels);
-        }
         return cells;
+    }
+
+    getNumLabels() {
+        return this._geometryNumLabels;
     }
 
     remove() {

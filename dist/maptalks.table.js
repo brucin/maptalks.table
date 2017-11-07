@@ -264,6 +264,14 @@ var Table = function (_maptalks$JSONAble) {
         };
     };
 
+    Table.prototype.getSize = function getSize() {
+        var map = this.getMap();
+        if (!map) {
+            return null;
+        }
+        return new maptalks.Size(this.tableWidth, this.tableHeight);
+    };
+
     Table.prototype._dataToJSON = function _dataToJSON() {
         var result = [];
         if (this.options['dynamic'] && this._data && this._data.length > 0) {
@@ -611,6 +619,10 @@ var Table = function (_maptalks$JSONAble) {
     };
 
     Table.prototype.getAllCells = function getAllCells() {
+        return this.getCells().concat(this.getNumLabels());
+    };
+
+    Table.prototype.getCells = function getCells() {
         var cells = [],
             row;
         for (var i = 0, len = this._tableRows.length; i < len; i++) {
@@ -621,10 +633,11 @@ var Table = function (_maptalks$JSONAble) {
                 }
             }
         }
-        if (this.options['dynamic'] && this.options['order']) {
-            cells = cells.concat(this._geometryNumLabels);
-        }
         return cells;
+    };
+
+    Table.prototype.getNumLabels = function getNumLabels() {
+        return this._geometryNumLabels;
     };
 
     Table.prototype.remove = function remove() {
@@ -1123,14 +1136,14 @@ Table.include( /** @lends Table.prototype */{
                 textPadding = [parseInt(textPadding.width), parseInt(textPadding.height)];
             }
         } else {
-            textPadding = [8, 2];
+            textPadding = [12, 8];
         }
         defaultSymbol['textPadding'] = textPadding;
         return defaultSymbol;
     },
 
     _convertCellSymbol: function _convertCellSymbol(cell) {
-        return cell.getSymbol();
+        return this.getCellSymbol(cell._row, cell._col);
     },
 
     getRowNum: function getRowNum(cell) {
@@ -1218,7 +1231,9 @@ Table.include( /** @lends Table.prototype */{
         var options = this._convertCellSymbolToNumberOptions(cell);
         //创建label
         var num = cell.getContent();
-        var numberLabel = new maptalks.Label(num, coordinate, options);
+        var cellSymbol = cell.getSymbol();
+        var textWidth = cellSymbol['textSize'] || 12;
+        var numberLabel = new maptalks.TextBox(num, coordinate, textWidth + 6, textWidth + 6, options);
         this.getLayer().addGeometry(numberLabel);
         this._geometryNumLabels.push(numberLabel);
         var me = this;
@@ -1243,8 +1258,8 @@ Table.include( /** @lends Table.prototype */{
         }, this);
         cell.on('symbolchange', function () {
             var options = _this._convertCellSymbolToNumberOptions(cell);
-            numberLabel.setBoxStyle(options.boxStyle);
-            numberLabel.setTextSymbol(options.textSymbol);
+            numberLabel.setBoxSymbol(options.boxSymbol);
+            numberLabel.setTextStyle(options.textStyle);
         }, this);
         cell.on('positionchanged contentchange', function () {
             var number = cell.getContent();
@@ -1276,29 +1291,30 @@ Table.include( /** @lends Table.prototype */{
 
     _convertCellSymbolToNumberOptions: function _convertCellSymbolToNumberOptions(cell) {
         var cellSymbol = cell.getSymbol();
-        var textSymbol = {
-            'textFaceName': cellSymbol['textFaceName'] || 'microsoft yahei',
-            'textFill': cellSymbol['textFill'] || '#ff0000',
-            'textSize': cellSymbol['textSize'],
-            'textLineSpacing': cellSymbol['textLineSpacing'],
-            'textWeight': cellSymbol['textWeight'],
-            'textStyle': cellSymbol['textStyle']
+        var boxSymbol = {
+            'markerType': 'ellipse',
+            'markerFill': cellSymbol['markerFill'] || '#4e98dd',
+            'markerFillOpacity': cellSymbol['markerFillOpacity'] || 1,
+            'markerLineColor': cellSymbol['markerLineColor'] || '#ffffff',
+            'markerLineWidth': 0
         };
-        var boxStyle = {
+        var textStyle = {
+            'wrap': false,
             'padding': [2, 2],
-            'minWidth': cellSymbol['textSize'],
-            'minHeight': cellSymbol['textSize'],
+            'verticalAlignment': 'top',
+            'horizontalAlignment': 'middle',
             'symbol': {
-                'markerType': 'ellipse',
-                'markerFill': cellSymbol['markerFill'] || '#4e98dd',
-                'markerFillOpacity': cellSymbol['markerFillOpacity'] || 1,
-                'markerLineColor': cellSymbol['markerLineColor'] || '#ffffff',
-                'markerLineWidth': 0
+                'textFaceName': cellSymbol['textFaceName'] || 'microsoft yahei',
+                'textFill': cellSymbol['textFill'] || '#ff0000',
+                'textSize': cellSymbol['textSize'],
+                'textLineSpacing': cellSymbol['textLineSpacing'],
+                'textWeight': cellSymbol['textWeight'],
+                'textStyle': cellSymbol['textStyle']
             }
         };
         return {
-            'boxStyle': boxStyle,
-            'textSymbol': textSymbol
+            'textStyle': textStyle,
+            'boxSymbol': boxSymbol
         };
     },
 
