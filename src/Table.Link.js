@@ -3,27 +3,31 @@ import Table from './Table';
 Table.include(/** @lends Table.prototype */{
 
     linkTo(target) {
-        if (!(target instanceof maptalks.Table)) return;
-        if (target.getLinker()) return;
-        if (target.getColumnNum() !== this.getColumnNum()) return;
-        target.addLinker(this);
+        if (!(target instanceof maptalks.Table)) return false;
+        if (target.getLinker()) return false;
+        if (target.getColumnNum() !== this.getColumnNum()) return false;
+        let ret = true;
+        ret = target.addLinker(this);
         this._linkTarget = target;
-        this.hideHeader();
+        //@Todo 暂时不隐藏表头
+        // this.hideHeader();
         this._moveToNewCoordinates();
         this._addLinkEvent();
         this._autoAdjustColumnWidth();
         this.config('draggable', false);
         this.config('adjustable', 'y');
+        return ret;
     },
 
     unLink() {
-        if (!this._linkTarget) return;
+        if (!this._linkTarget) return false;
         this._removeLinkEvent();
         this._linkTarget.clearLinker();
         delete this._linkTarget;
         this.showHeader();
         this.config('draggable', true);
         this.config('adjustable', true);
+        return true;
     },
 
     clearLinker() {
@@ -32,9 +36,10 @@ Table.include(/** @lends Table.prototype */{
     },
 
     addLinker(linker) {
-        if (linker instanceof maptalks.Table) return;
-        if (this._linker) return;
+        if (!linker instanceof maptalks.Table) return false;
+        if (this._linker) return false;
         this._linker = linker;
+        return true;
     },
 
     getLinker() {

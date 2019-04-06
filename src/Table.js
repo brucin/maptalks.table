@@ -18,7 +18,7 @@ const defaultOptions = {
         'textSize': 12,
         'textFill': '#ebf2f9',
         'textWrapWidth': 100,
-        'textPadding' : [8, 8]
+        'textPadding' : [8, 2]
     },
     'symbol': {
         'lineColor': '#ffffff',
@@ -27,7 +27,7 @@ const defaultOptions = {
         'textSize': 12,
         'textFill': '#ebf2f9',
         'textWrapWidth': 100,
-        'textPadding' :  [8, 8]
+        'textPadding' :  [8, 2]
     },
     'position': {
         'x': 121.489935,
@@ -155,7 +155,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         //包含表头
         if (this.options['header']) {
             this._rowNum += 1;
-        }
+        }//
         this._cellWidth = this.options['width'] / this._colNum;
         this._cellHeight = this.options['height'] / this._rowNum;
         this._currentRow = -1;
@@ -209,16 +209,16 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
     }
 
     initByJson(json) {
-        var options = json['options'];
+        let options = json['options'];
         this._columns = json['colums'];
         this._colNum = json['colNum'];
         this._headAttributes = json['attributes'];
         this._data = [];
         //处理其中geometry
-        var data = json['data'];
+        let data = json['data'];
         if (options['dynamic'] && data && data.length > 0) {
-            var item, geoJson, geometry;
-            for (var i = 0, len = data.length; i < len; i++) {
+            let item, geoJson, geometry;
+            for (let i = 0, len = data.length; i < len; i++) {
                 item = data[i];
                 geoJson = item['geometry'];
                 if (geoJson) {
@@ -233,12 +233,48 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
             this._data = data;
         }
         this._rowNum = json['rowNum'];
+        if(this._colNum <= 0 || this._rowNum <= 0) return null;
         this._rowHeights = json['rowHeights'];
         this._colWidths = json['colWidths'];
-        // this.tableWidth = json['tableWidth'];
+        this.tableWidth = json['tableWidth'];
+        this.tableHeight = json['tableHeight'];
+        this._cellWidth = this.tableWidth / this._colNum;
+        this._cellHeight = this.tableHeight / this._rowNum;
         this._tableRows = this._data;
-        this.tableSymbols = json['tableSymbols'] || this._initCellSymbol();
+        this.tableSymbols = this.convertTableSymbols(json['tableSymbols']);//json['tableSymbols'] || this._initCellSymbol();
+        if(!this.tableSymbols || !this.tableSymbols['0_0']) {
+            this.tableSymbols = this._initCellSymbol();
+        }
+        this._calculateRowHeightByRowWidth(this._colWidths);
         return this;
+    }
+
+    convertTableSymbols(tableSymbols) {
+        if(tableSymbols) {
+            let rowNum = this._rowNum;
+            let colNum = this._colNum;
+            for (let i = 0; i < rowNum; i++) {
+                for (let j = 0; j < colNum; j++) {
+                    let symbol = tableSymbols[i+'_'+j];
+                    if(symbol) {
+                        symbol['textWrapWidth'] = this._colWidths[j];
+                        let textPadding = symbol['textPadding'];
+                        if (textPadding) {
+                            if(textPadding.width) {
+                                textPadding = [parseInt(textPadding.width), parseInt(textPadding.height)];
+                            }
+                        } else {
+                            textPadding = [8, 2];
+                        }
+                        symbol['textPadding'] = textPadding;
+                        tableSymbols[i+'_'+j]= symbol;
+                    }
+                }
+            }
+        } else {
+            tableSymbols = this._initCellSymbol();
+        }
+        return tableSymbols;
     }
 
     getId() {
@@ -358,8 +394,8 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
     }
 
     _initRowHeightAndColWidth() {
-        if (this._rowHeights.length === 0 ||
-            this._colWidths.length === 0) {
+        // if (this._rowHeights.length === 0 ||
+        //     this._colWidths.length === 0) {
             for (let i = 0; i < this._colNum; i++) {
                 this._colWidths[i] = 0;
             }
@@ -370,7 +406,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
                 this._calculateHeaderSize();
             }
             this._calculateRowSize();
-        }
+        // }
         for (let i = 0; i < this._rowHeights.length; i++) {
             this.tableHeight += this._rowHeights[i];
         }
@@ -384,6 +420,9 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
             let col = this._columns[i];
             let header = col['header'];
             let style =  this.getCellSymbol(0, i);
+            if (this.tableSymbols && this.tableSymbols['0_' + i]) {
+                style =  this.tableSymbols['0_'+i];
+            }
             let font = maptalks.StringUtil.getFont(style);
             let size = maptalks.StringUtil.stringLength(header, font);
             let textPadding = style['textPadding'];
@@ -402,17 +441,20 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
             for (let j = 0, length = this._columns.length; j < length; j++) {
                 let col = this._columns[j];
                 let content = row[col.dataIndex];
-                let style =  this.getCellSymbol(i + start, j);
+                let style = this.getCellSymbol((i + start), j);
+                if (this.tableSymbols && this.tableSymbols[(i + start) + '_' + j]) {
+                    style =  this.tableSymbols[(i + start) + '_' + j];
+                }
                 let font = maptalks.StringUtil.getFont(style);
                 let size = maptalks.StringUtil.stringLength(content, font);
                 let textPadding = style['textPadding'];
                 let maxWidth = this._colWidths[j];
-                let width = this._getPrefectWidth(size['width'], maxWidth, textPadding[0], 2);
-                // if (size['width'] > maxWidth) {
-                //     //split row num by max width, magic number 4 is prefect row number
-                //     let newRowWidth = Math.ceil(size['width'] / 4);
-                //     width = maxWidth * rowNum + textPadding[0];
-                // }
+                let width = maxWidth;
+                if (size['width'] > maxWidth) {//比表头长
+                    //split row num by max width, magic number 4 is prefect row number
+                    // let newRowWidth = Math.ceil(size['width'] / 4);
+                    width = this._getPrefectWidth(size['width'], maxWidth, maxWidth, textPadding[0], 2);
+                } 
                 style['textWrapWidth'] = width;
                 this._colWidths[j] = width;
                 let result = maptalks.StringUtil.splitTextToRow(content, style);
@@ -424,18 +466,70 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
         }
     }
 
-    _getPrefectWidth(width, maxWidth, widthPadding, index) {
-        while(width > maxWidth) {
-            let newWidth = Math.ceil(width/index);
-            if(newWidth > maxWidth) {
-                this._getPrefectWidth(width, newWidth, index++);
-            } else {
-                maxWidth += widthPadding * 2;
-                break;
+    _calculateRowHeightByRowWidth(colWidths) {
+
+        for (let i = 0, len = this._columns.length; i < len; i++) {
+            let col = this._columns[i];
+            let header = col['header'];
+            let style =  this.getCellSymbol(0, i);
+            if (this.tableSymbols  && this.tableSymbols['0_'+i] ) {
+                style =  this.tableSymbols['0_'+i];
+            }
+            let font = maptalks.StringUtil.getFont(style);
+            let size = maptalks.StringUtil.stringLength(header, font);
+            let textPadding = style['textPadding'];
+            if(size['height'] > (this._rowHeights[0] -  textPadding[1] * 2)) {
+                this._rowHeights[0] = size['height'] + textPadding[1] * 2;
             }
         }
-        width = maxWidth;
-        return width;
+
+        let start = 0;
+        if (this.options['header']) {
+            start = 1;
+        }
+        for (let i = 0, len = this._data.length; i < len; i++) {
+            let row = this._data[i];
+            for (let j = 0, length = this._columns.length; j < length; j++) {
+                let col = this._columns[j];
+                let content = row[col.dataIndex];
+                let style =  this.getCellSymbol((i + start), j);
+                // if (this.tableSymbols) { //&& this.tableSymbols[(i + start) + '_' + j]) {
+                if (this.tableSymbols && this.tableSymbols[(i + start) + '_' + j]) {
+                    style =  this.tableSymbols[(i + start) + '_' + j];
+                }
+                if(style) {
+                    let textPadding = style['textPadding'];
+                    style['textWrapWidth'] = colWidths[j];
+                    let result = maptalks.StringUtil.splitTextToRow(content, style);
+                    let rowSize = result['size'], actualHeight = rowSize['height'] + textPadding[1] * 2;
+                    if (this._rowHeights[i + start] < actualHeight) {
+                        this._rowHeights[i + start] = actualHeight;
+                    } 
+                }
+            }
+        }
+        this.tableHeight = 0;
+        this.tableWidth = 0;
+        for (let i = 0; i < this._rowHeights.length; i++) {
+            this.tableHeight += this._rowHeights[i];
+        }
+        for (let i = 0; i < this._colWidths.length; i++) {
+            this.tableWidth += this._colWidths[i];
+        }
+    }
+
+    _getPrefectWidth(width, maxWidth, newWidth, padding, index) {
+        if(width > maxWidth && index < 6) {
+            newWidth = Math.ceil(width/index);
+            if(newWidth > maxWidth) {
+                maxWidth = this._getPrefectWidth(width, maxWidth, newWidth, padding, index+1);
+            } else {
+                maxWidth += padding * 2;
+            }
+        } else {
+            maxWidth = newWidth;
+        }
+        return maxWidth;
     }
 
     _initCellSymbol() {
@@ -478,9 +572,13 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
             let row = this._tableRows[i];
             if (row) {
                 for (let j = 0, rowLength = row.length; j < rowLength; j++) {
-                    tableSymbols[i + '_' + j] = this._convertCellSymbol(row[j]);
+                    let cellSymbol = row[j].getSymbol();
+                    let textStyle = row[j].getTextStyle();
+                    cellSymbol['padding'] = textStyle['padding'];
+                    cellSymbol['textHorizontalAlignment'] = textStyle['horizontalAlignment'];
+                    cellSymbol['textVerticalAlignment'] = textStyle['verticalAlignment'];
+                    tableSymbols[i + '_' + j] = cellSymbol;//this._convertCellSymbol(row[j]);
                 }
-
             }
         }
         return tableSymbols;
@@ -615,6 +713,7 @@ export default class Table extends maptalks.JSONAble(maptalks.Eventable(maptalks
 
     stopEditTable() {
         var row;
+        if(!this._tableRows) return;
         for (var i = 0, len = this._tableRows.length; i < len; i++) {
             row = this._tableRows[i];
             if (!row) return;

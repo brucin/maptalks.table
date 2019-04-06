@@ -17,6 +17,7 @@ Table.include(/** @lends Table.prototype */{
         let newDataset = [], heightOffset = 0;
         if (!data || data.length === 0) { //添加空行
             newDataset.push(this._createRow(insertRowNum, data, true));
+            heightOffset += this._rowHeights[insertRowNum];
         } else if (maptalks.Util.isArrayHasData(data)) {
             let item;
             for (let i = 0, len = data.length; i < len; i++) {
@@ -79,7 +80,7 @@ Table.include(/** @lends Table.prototype */{
             }
             let cell = row[i];
             if (cell) {
-                if (this.options['order'] && dataIndex === 'maptalks_order') {
+                if (this.options['dynamic'] && this.options['order'] && dataIndex === 'maptalks_order') {
                     text = cell.getContent();
                 }
                 cell.setContent(text);
@@ -106,7 +107,9 @@ Table.include(/** @lends Table.prototype */{
             for (let j = 0, rowLength = row.length; j < rowLength; j++) {
                 cell = row[j];
                 if (i > rowNum) {
-                    this._translateDy(cell, -height);
+                    if(this.options['hideHeader']) {
+                        this._translateDy(cell, -height);
+                    }
                 } else if (show) {
                     cell.show();
                 } else {
@@ -114,7 +117,9 @@ Table.include(/** @lends Table.prototype */{
                 }
             }
         }
-        this.tableHeight -= height;
+        if(this.options['hideHeader']) {
+            this.tableHeight -= height;
+        }
         if (show) {
             this.fire('showrow', this);
         } else {
@@ -238,7 +243,7 @@ Table.include(/** @lends Table.prototype */{
             } else {
                 item = {};
             }
-            if (this.options['order'] && dataIndex === 'maptalks_order') {
+            if (this.options['dynamic'] && this.options['order'] && dataIndex === 'maptalks_order') {
                 if (!text || text === '') {
                     let startNum = this.options['startNum'] || 1;
                     if (startNum > 1) {
@@ -249,6 +254,7 @@ Table.include(/** @lends Table.prototype */{
                 }
                 item[dataIndex] = text;
             }
+            let thisColumnWidth = this._colWidths[i];
             if (add) {
                 let offset = this.getCellOffset(index - 1, i);
                 cellOffset = {
@@ -256,11 +262,16 @@ Table.include(/** @lends Table.prototype */{
                     'dy': offset.dy + rowHeight
                 };
                 symbol = this.options['symbol'];
-                size = new maptalks.Size(this._colWidths[i], rowHeight);
+                size = new maptalks.Size(thisColumnWidth, rowHeight);
             } else {
                 cellOffset = this.getCellOffset(index, i);
-                symbol = this.getCellSymbol(index, i);
-                size = new maptalks.Size(this._colWidths[i], rowHeight);
+                // symbol = this.getCellSymbol(index, i);
+                symbol = this.tableSymbols[index + '_' + i];
+                size = new maptalks.Size(thisColumnWidth, rowHeight);
+            }
+            let textWrapLength = symbol['textWrapWidth'];
+            if(thisColumnWidth > textWrapLength) {
+                symbol['textWrapWidth'] = thisColumnWidth;
             }
             cell = this.createCell(text, cellOffset, size, symbol);
             cell._row = index;
@@ -365,7 +376,7 @@ Table.include(/** @lends Table.prototype */{
             row = lastDataset[i];
             for (let j = 0, rowLength = row.length; j < rowLength; j++) {
                 row[j]._row += insertRowLength;
-                if (this.options['order'] && this._columns[j]['dataIndex'] === 'maptalks_order') {
+                if (this.options['dynamic'] && this.options['order'] && this._columns[j]['dataIndex'] === 'maptalks_order') {
                     let rowIndex = row[j]._row;
                     let startNum = this.options['startNum'] || 1;
                     if (startNum > 1) {

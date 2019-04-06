@@ -170,6 +170,9 @@ Table.include(/** @lends Table.prototype */{
 
     _addCellForColumn(header, item, rowNum, colNum, add) {
         let cellOffset, symbol, size, cellWidth, cell;
+        if(!item) item = '';
+        if(!header) header = 'New';
+        let dataIndex = header + '_' + new Date().getTime();
         if (add) {
             let prevColNum = colNum - 1;
             let offset = this.getCellOffset(rowNum, prevColNum);
@@ -190,12 +193,12 @@ Table.include(/** @lends Table.prototype */{
             size = new maptalks.Size(this._cellWidth, this._rowHeights[rowNum]);
         } else {
             cellOffset = this.getCellOffset(rowNum, colNum);
-            symbol = this.getCellSymbol(rowNum, colNum);
+            symbol = this.tableSymbols[rowNum + '_' + colNum];//this.getCellSymbol(rowNum, colNum);
             cellWidth = this._colWidths[colNum];
             size = new maptalks.Size(cellWidth, this._rowHeights[rowNum]);
         }
         if (rowNum === 0) {
-            let column = { header: header, dataIndex: header, type: 'string' };
+            let column = { header: header, dataIndex: dataIndex, type: 'string' };
             this._columns.splice(colNum, 0, column);
             cell = this.createCell(header, cellOffset, size, symbol);
             this.tableWidth += cellWidth;
@@ -204,13 +207,14 @@ Table.include(/** @lends Table.prototype */{
             cell = this.createCell(item, cellOffset, size, symbol);
             //update table data
             if (this.options['header']) {
-                --rowNum;
+                this._data[rowNum-1][header] = item;
+            } else {
+                this._data[rowNum][header] = item;
             }
-            this._data[rowNum][header] = item;
         }
         cell._row = rowNum;
         cell._col = colNum;
-        cell.dataIndex = header;
+        cell.dataIndex = dataIndex;
         this.tableSymbols[rowNum + '_' + colNum] = symbol;
         this._addEventsToCell(cell).addTo(this._layer);
         return cell;

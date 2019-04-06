@@ -1,7 +1,7 @@
 /*!
  * maptalks.table v0.1.1
  * LICENSE : MIT
- * (c) 2016-2017 maptalks.org
+ * (c) 2016-2018 maptalks.org
  */
 /*!
  * requires maptalks@^0.28.0 
@@ -14,65 +14,11 @@
 
 function _defaults(obj, defaults) { var keys = Object.getOwnPropertyNames(defaults); for (var i = 0; i < keys.length; i++) { var key = keys[i]; var value = Object.getOwnPropertyDescriptor(defaults, key); if (value && value.configurable && obj[key] === undefined) { Object.defineProperty(obj, key, value); } } return obj; }
 
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-
-
-
-
-
-
-
-
-var classCallCheck = function (instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
-};
-
-
-
-
-
-
-
-
-
-
-
-var inherits = function (subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
-  }
-
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : _defaults(subClass, superClass);
-};
-
-
-
-
-
-
-
-
-
-
-
-var possibleConstructorReturn = function (self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && (typeof call === "object" || typeof call === "function") ? call : self;
-};
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : _defaults(subClass, superClass); }
 
 var defaultOptions = {
     'title': 'title',
@@ -85,7 +31,7 @@ var defaultOptions = {
         'textSize': 12,
         'textFill': '#ebf2f9',
         'textWrapWidth': 100,
-        'textPadding': [8, 8]
+        'textPadding': [8, 2]
     },
     'symbol': {
         'lineColor': '#ffffff',
@@ -94,7 +40,7 @@ var defaultOptions = {
         'textSize': 12,
         'textFill': '#ebf2f9',
         'textWrapWidth': 100,
-        'textPadding': [8, 8]
+        'textPadding': [8, 2]
     },
     'position': {
         'x': 121.489935,
@@ -127,7 +73,7 @@ var EXCEPTION_DEFS = {
  */
 
 var Table = function (_maptalks$JSONAble) {
-    inherits(Table, _maptalks$JSONAble);
+    _inherits(Table, _maptalks$JSONAble);
 
     /**
      * 表格构造函数
@@ -182,9 +128,9 @@ var Table = function (_maptalks$JSONAble) {
     function Table(options) {
         var _ret;
 
-        classCallCheck(this, Table);
+        _classCallCheck(this, Table);
 
-        var _this = possibleConstructorReturn(this, _maptalks$JSONAble.call(this, options));
+        var _this = _possibleConstructorReturn(this, _maptalks$JSONAble.call(this, options));
 
         _this.options['width'] = _this.options['width'] || 300;
         _this.options['height'] = _this.options['height'] || 300;
@@ -233,7 +179,7 @@ var Table = function (_maptalks$JSONAble) {
         //包含表头
         if (_this.options['header']) {
             _this._rowNum += 1;
-        }
+        } //
         _this._cellWidth = _this.options['width'] / _this._colNum;
         _this._cellHeight = _this.options['height'] / _this._rowNum;
         _this._currentRow = -1;
@@ -245,7 +191,7 @@ var Table = function (_maptalks$JSONAble) {
         _this.tableHeight = 0;
         _this._initRowHeightAndColWidth();
         _this.tableSymbols = _this._initCellSymbol();
-        return _ret = _this, possibleConstructorReturn(_this, _ret);
+        return _ret = _this, _possibleConstructorReturn(_this, _ret);
     }
 
     Table.prototype.toJSON = function toJSON() {
@@ -295,7 +241,9 @@ var Table = function (_maptalks$JSONAble) {
         //处理其中geometry
         var data = json['data'];
         if (options['dynamic'] && data && data.length > 0) {
-            var item, geoJson, geometry;
+            var item = void 0,
+                geoJson = void 0,
+                geometry = void 0;
             for (var i = 0, len = data.length; i < len; i++) {
                 item = data[i];
                 geoJson = item['geometry'];
@@ -311,12 +259,48 @@ var Table = function (_maptalks$JSONAble) {
             this._data = data;
         }
         this._rowNum = json['rowNum'];
+        if (this._colNum <= 0 || this._rowNum <= 0) return null;
         this._rowHeights = json['rowHeights'];
         this._colWidths = json['colWidths'];
-        // this.tableWidth = json['tableWidth'];
+        this.tableWidth = json['tableWidth'];
+        this.tableHeight = json['tableHeight'];
+        this._cellWidth = this.tableWidth / this._colNum;
+        this._cellHeight = this.tableHeight / this._rowNum;
         this._tableRows = this._data;
-        this.tableSymbols = json['tableSymbols'] || this._initCellSymbol();
+        this.tableSymbols = this.convertTableSymbols(json['tableSymbols']); //json['tableSymbols'] || this._initCellSymbol();
+        if (!this.tableSymbols || !this.tableSymbols['0_0']) {
+            this.tableSymbols = this._initCellSymbol();
+        }
+        this._calculateRowHeightByRowWidth(this._colWidths);
         return this;
+    };
+
+    Table.prototype.convertTableSymbols = function convertTableSymbols(tableSymbols) {
+        if (tableSymbols) {
+            var rowNum = this._rowNum;
+            var colNum = this._colNum;
+            for (var i = 0; i < rowNum; i++) {
+                for (var j = 0; j < colNum; j++) {
+                    var symbol = tableSymbols[i + '_' + j];
+                    if (symbol) {
+                        symbol['textWrapWidth'] = this._colWidths[j];
+                        var textPadding = symbol['textPadding'];
+                        if (textPadding) {
+                            if (textPadding.width) {
+                                textPadding = [parseInt(textPadding.width), parseInt(textPadding.height)];
+                            }
+                        } else {
+                            textPadding = [8, 2];
+                        }
+                        symbol['textPadding'] = textPadding;
+                        tableSymbols[i + '_' + j] = symbol;
+                    }
+                }
+            }
+        } else {
+            tableSymbols = this._initCellSymbol();
+        }
+        return tableSymbols;
     };
 
     Table.prototype.getId = function getId() {
@@ -437,18 +421,19 @@ var Table = function (_maptalks$JSONAble) {
     };
 
     Table.prototype._initRowHeightAndColWidth = function _initRowHeightAndColWidth() {
-        if (this._rowHeights.length === 0 || this._colWidths.length === 0) {
-            for (var i = 0; i < this._colNum; i++) {
-                this._colWidths[i] = 0;
-            }
-            for (var _i2 = 0; _i2 < this._rowNum; _i2++) {
-                this._rowHeights[_i2] = 0;
-            }
-            if (this.options['header']) {
-                this._calculateHeaderSize();
-            }
-            this._calculateRowSize();
+        // if (this._rowHeights.length === 0 ||
+        //     this._colWidths.length === 0) {
+        for (var i = 0; i < this._colNum; i++) {
+            this._colWidths[i] = 0;
         }
+        for (var _i2 = 0; _i2 < this._rowNum; _i2++) {
+            this._rowHeights[_i2] = 0;
+        }
+        if (this.options['header']) {
+            this._calculateHeaderSize();
+        }
+        this._calculateRowSize();
+        // }
         for (var _i3 = 0; _i3 < this._rowHeights.length; _i3++) {
             this.tableHeight += this._rowHeights[_i3];
         }
@@ -462,6 +447,9 @@ var Table = function (_maptalks$JSONAble) {
             var col = this._columns[i];
             var header = col['header'];
             var style = this.getCellSymbol(0, i);
+            if (this.tableSymbols && this.tableSymbols['0_' + i]) {
+                style = this.tableSymbols['0_' + i];
+            }
             var font = maptalks.StringUtil.getFont(style);
             var size = maptalks.StringUtil.stringLength(header, font);
             var textPadding = style['textPadding'];
@@ -481,16 +469,20 @@ var Table = function (_maptalks$JSONAble) {
                 var col = this._columns[j];
                 var content = row[col.dataIndex];
                 var style = this.getCellSymbol(i + start, j);
+                if (this.tableSymbols && this.tableSymbols[i + start + '_' + j]) {
+                    style = this.tableSymbols[i + start + '_' + j];
+                }
                 var font = maptalks.StringUtil.getFont(style);
                 var size = maptalks.StringUtil.stringLength(content, font);
                 var textPadding = style['textPadding'];
                 var maxWidth = this._colWidths[j];
-                var width = this._getPrefectWidth(size['width'], maxWidth, textPadding[0], 2);
-                // if (size['width'] > maxWidth) {
-                //     //split row num by max width, magic number 4 is prefect row number
-                //     let newRowWidth = Math.ceil(size['width'] / 4);
-                //     width = maxWidth * rowNum + textPadding[0];
-                // }
+                var width = maxWidth;
+                if (size['width'] > maxWidth) {
+                    //比表头长
+                    //split row num by max width, magic number 4 is prefect row number
+                    // let newRowWidth = Math.ceil(size['width'] / 4);
+                    width = this._getPrefectWidth(size['width'], maxWidth, maxWidth, textPadding[0], 2);
+                }
                 style['textWrapWidth'] = width;
                 this._colWidths[j] = width;
                 var result = maptalks.StringUtil.splitTextToRow(content, style);
@@ -503,18 +495,71 @@ var Table = function (_maptalks$JSONAble) {
         }
     };
 
-    Table.prototype._getPrefectWidth = function _getPrefectWidth(width, maxWidth, widthPadding, index) {
-        while (width > maxWidth) {
-            var newWidth = Math.ceil(width / index);
-            if (newWidth > maxWidth) {
-                this._getPrefectWidth(width, newWidth, index++);
-            } else {
-                maxWidth += widthPadding * 2;
-                break;
+    Table.prototype._calculateRowHeightByRowWidth = function _calculateRowHeightByRowWidth(colWidths) {
+
+        for (var i = 0, len = this._columns.length; i < len; i++) {
+            var col = this._columns[i];
+            var header = col['header'];
+            var style = this.getCellSymbol(0, i);
+            if (this.tableSymbols && this.tableSymbols['0_' + i]) {
+                style = this.tableSymbols['0_' + i];
+            }
+            var font = maptalks.StringUtil.getFont(style);
+            var size = maptalks.StringUtil.stringLength(header, font);
+            var textPadding = style['textPadding'];
+            if (size['height'] > this._rowHeights[0] - textPadding[1] * 2) {
+                this._rowHeights[0] = size['height'] + textPadding[1] * 2;
             }
         }
-        width = maxWidth;
-        return width;
+
+        var start = 0;
+        if (this.options['header']) {
+            start = 1;
+        }
+        for (var _i5 = 0, _len = this._data.length; _i5 < _len; _i5++) {
+            var row = this._data[_i5];
+            for (var j = 0, length = this._columns.length; j < length; j++) {
+                var _col = this._columns[j];
+                var content = row[_col.dataIndex];
+                var _style = this.getCellSymbol(_i5 + start, j);
+                // if (this.tableSymbols) { //&& this.tableSymbols[(i + start) + '_' + j]) {
+                if (this.tableSymbols && this.tableSymbols[_i5 + start + '_' + j]) {
+                    _style = this.tableSymbols[_i5 + start + '_' + j];
+                }
+                if (_style) {
+                    var _textPadding = _style['textPadding'];
+                    _style['textWrapWidth'] = colWidths[j];
+                    var result = maptalks.StringUtil.splitTextToRow(content, _style);
+                    var rowSize = result['size'],
+                        actualHeight = rowSize['height'] + _textPadding[1] * 2;
+                    if (this._rowHeights[_i5 + start] < actualHeight) {
+                        this._rowHeights[_i5 + start] = actualHeight;
+                    }
+                }
+            }
+        }
+        this.tableHeight = 0;
+        this.tableWidth = 0;
+        for (var _i6 = 0; _i6 < this._rowHeights.length; _i6++) {
+            this.tableHeight += this._rowHeights[_i6];
+        }
+        for (var _i7 = 0; _i7 < this._colWidths.length; _i7++) {
+            this.tableWidth += this._colWidths[_i7];
+        }
+    };
+
+    Table.prototype._getPrefectWidth = function _getPrefectWidth(width, maxWidth, newWidth, padding, index) {
+        if (width > maxWidth && index < 6) {
+            newWidth = Math.ceil(width / index);
+            if (newWidth > maxWidth) {
+                maxWidth = this._getPrefectWidth(width, maxWidth, newWidth, padding, index + 1);
+            } else {
+                maxWidth += padding * 2;
+            }
+        } else {
+            maxWidth = newWidth;
+        }
+        return maxWidth;
     };
 
     Table.prototype._initCellSymbol = function _initCellSymbol() {
@@ -557,7 +602,12 @@ var Table = function (_maptalks$JSONAble) {
             var row = this._tableRows[i];
             if (row) {
                 for (var j = 0, rowLength = row.length; j < rowLength; j++) {
-                    tableSymbols[i + '_' + j] = this._convertCellSymbol(row[j]);
+                    var cellSymbol = row[j].getSymbol();
+                    var textStyle = row[j].getTextStyle();
+                    cellSymbol['padding'] = textStyle['padding'];
+                    cellSymbol['textHorizontalAlignment'] = textStyle['horizontalAlignment'];
+                    cellSymbol['textVerticalAlignment'] = textStyle['verticalAlignment'];
+                    tableSymbols[i + '_' + j] = cellSymbol; //this._convertCellSymbol(row[j]);
                 }
             }
         }
@@ -696,6 +746,7 @@ var Table = function (_maptalks$JSONAble) {
 
     Table.prototype.stopEditTable = function stopEditTable() {
         var row;
+        if (!this._tableRows) return;
         for (var i = 0, len = this._tableRows.length; i < len; i++) {
             row = this._tableRows[i];
             if (!row) return;
@@ -873,11 +924,11 @@ var Table = function (_maptalks$JSONAble) {
             newValues[i + 1] = item[dataIndex];
         }
         var row = void 0;
-        for (var _i5 = 1, _len = this._tableRows.length; _i5 < _len; _i5++) {
-            row = this._tableRows[_i5];
+        for (var _i8 = 1, _len2 = this._tableRows.length; _i8 < _len2; _i8++) {
+            row = this._tableRows[_i8];
             if (!row) return;
             cell = row[colNum];
-            cell.setContent(newValues[_i5]);
+            cell.setContent(newValues[_i8]);
         }
     };
 
@@ -1059,6 +1110,7 @@ Table.registerJSONType('Table');
 Table.include( /** @lends Table.prototype */{
 
     createCell: function createCell(content, cellOffset, size, symbol) {
+        if (!content) content = '';
         var textSize = symbol['textSize'] || 12;
         var textLineSpacing = symbol['textLineSpacing'] || 8;
         var textPadding = symbol['textPadding'] || [8, 2];
@@ -1094,14 +1146,16 @@ Table.include( /** @lends Table.prototype */{
             }
         };
         var coordinate = this.options['position'];
-        return new maptalks.TextBox(content, coordinate, size['width'], size['height'], options);
+        var tableCell = new maptalks.TextBox(content, coordinate, size['width'], size['height'], options);
+        tableCell.setZIndex(this._zindex);
+        return tableCell;
     },
 
     getCellOffset: function getCellOffset(row, col) {
         var dx = 0,
             dy = 0,
-            currentRowHeight = this._cellWidth / 2,
-            currentColWidth = this._cellHeight / 2;
+            currentRowHeight = this._cellHeight / 2,
+            currentColWidth = this._cellWidth / 2;
         if (this._rowHeights[row]) {
             currentRowHeight = this._rowHeights[row] / 2;
         }
@@ -1136,7 +1190,7 @@ Table.include( /** @lends Table.prototype */{
                 textPadding = [parseInt(textPadding.width), parseInt(textPadding.height)];
             }
         } else {
-            textPadding = [12, 8];
+            textPadding = [8, 2];
         }
         defaultSymbol['textPadding'] = textPadding;
         return defaultSymbol;
@@ -1233,7 +1287,19 @@ Table.include( /** @lends Table.prototype */{
         var num = cell.getContent();
         var cellSymbol = cell.getSymbol();
         var textWidth = cellSymbol['textSize'] || 12;
-        var numberLabel = new maptalks.TextBox(num, coordinate, textWidth + 6, textWidth + 6, options);
+        var padding = options.textStyle.padding;
+        var xpadding = 0,
+            ypadding = 0;
+        if (padding) {
+            xpadding = padding[1] * 2;
+            ypadding = padding[0] * 2;
+        }
+        // let step = 1;
+        // if(num > 9) {
+        //     step = 2;
+        // }
+        // let numberLabel = new maptalks.TextBox(num, coordinate, textWidth*step + xpadding, textWidth*step + ypadding, options);
+        var numberLabel = new maptalks.TextBox(num, coordinate, textWidth * 3 / 2 + xpadding, textWidth * 3 / 2 + ypadding, options);
         this.getLayer().addGeometry(numberLabel);
         this._geometryNumLabels.push(numberLabel);
         var me = this;
@@ -1300,7 +1366,7 @@ Table.include( /** @lends Table.prototype */{
         };
         var textStyle = {
             'wrap': false,
-            'padding': [2, 2],
+            'padding': [1, 1],
             'verticalAlignment': 'top',
             'horizontalAlignment': 'middle',
             'symbol': {
@@ -1506,6 +1572,9 @@ Table.include( /** @lends Table.prototype */{
             size = void 0,
             cellWidth = void 0,
             cell = void 0;
+        if (!item) item = '';
+        if (!header) header = 'New';
+        var dataIndex = header + '_' + new Date().getTime();
         if (add) {
             var prevColNum = colNum - 1;
             var offset = this.getCellOffset(rowNum, prevColNum);
@@ -1526,12 +1595,12 @@ Table.include( /** @lends Table.prototype */{
             size = new maptalks.Size(this._cellWidth, this._rowHeights[rowNum]);
         } else {
             cellOffset = this.getCellOffset(rowNum, colNum);
-            symbol = this.getCellSymbol(rowNum, colNum);
+            symbol = this.tableSymbols[rowNum + '_' + colNum]; //this.getCellSymbol(rowNum, colNum);
             cellWidth = this._colWidths[colNum];
             size = new maptalks.Size(cellWidth, this._rowHeights[rowNum]);
         }
         if (rowNum === 0) {
-            var column = { header: header, dataIndex: header, type: 'string' };
+            var column = { header: header, dataIndex: dataIndex, type: 'string' };
             this._columns.splice(colNum, 0, column);
             cell = this.createCell(header, cellOffset, size, symbol);
             this.tableWidth += cellWidth;
@@ -1540,13 +1609,14 @@ Table.include( /** @lends Table.prototype */{
             cell = this.createCell(item, cellOffset, size, symbol);
             //update table data
             if (this.options['header']) {
-                --rowNum;
+                this._data[rowNum - 1][header] = item;
+            } else {
+                this._data[rowNum][header] = item;
             }
-            this._data[rowNum][header] = item;
         }
         cell._row = rowNum;
         cell._col = colNum;
-        cell.dataIndex = header;
+        cell.dataIndex = dataIndex;
         this.tableSymbols[rowNum + '_' + colNum] = symbol;
         this._addEventsToCell(cell).addTo(this._layer);
         return cell;
@@ -1645,6 +1715,14 @@ Table.include( /** @lends Table.prototype */{
     }
 });
 
+function _defaults$1(obj, defaults) { var keys = Object.getOwnPropertyNames(defaults); for (var i = 0; i < keys.length; i++) { var key = keys[i]; var value = Object.getOwnPropertyDescriptor(defaults, key); if (value && value.configurable && obj[key] === undefined) { Object.defineProperty(obj, key, value); } } return obj; }
+
+function _classCallCheck$1(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn$1(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits$1(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : _defaults$1(subClass, superClass); }
+
 var DRAG_STAGE_LAYER_ID = maptalks.INTERNAL_LAYER_PREFIX + '_drag_stage';
 
 var EVENTS = maptalks.Browser.touch ? 'touchstart mousedown' : 'mousedown';
@@ -1657,14 +1735,15 @@ var EVENTS = maptalks.Browser.touch ? 'touchstart mousedown' : 'mousedown';
  */
 
 var TableDragHandler = function (_maptalks$Handler) {
-    inherits(TableDragHandler, _maptalks$Handler);
+    _inherits$1(TableDragHandler, _maptalks$Handler);
 
     /**
      * @param  {Geometry} target geometry target to drag
      */
     function TableDragHandler(target) {
-        classCallCheck(this, TableDragHandler);
-        return possibleConstructorReturn(this, _maptalks$Handler.call(this, target));
+        _classCallCheck$1(this, TableDragHandler);
+
+        return _possibleConstructorReturn$1(this, _maptalks$Handler.call(this, target));
     }
 
     TableDragHandler.prototype.addHooks = function addHooks() {
@@ -1911,7 +1990,7 @@ Table.include( /** @lends Table.prototype */{
             col = this._columns[i];
             text = col['header'];
             size = new maptalks.Size(this._colWidths[i], this._rowHeights[0]);
-            var symbol = this.getCellSymbol(0, i);
+            var symbol = this.tableSymbols['0_' + i];
             cell = this.createCell(text, cellOffset, size, symbol);
             cell._row = 0;
             cell._col = i;
@@ -1949,6 +2028,7 @@ Table.include( /** @lends Table.prototype */{
         if (!data || data.length === 0) {
             //添加空行
             newDataset.push(this._createRow(insertRowNum, data, true));
+            heightOffset += this._rowHeights[insertRowNum];
         } else if (maptalks.Util.isArrayHasData(data)) {
             var item = void 0;
             for (var i = 0, len = data.length; i < len; i++) {
@@ -2009,7 +2089,7 @@ Table.include( /** @lends Table.prototype */{
             }
             var cell = row[i];
             if (cell) {
-                if (this.options['order'] && dataIndex === 'maptalks_order') {
+                if (this.options['dynamic'] && this.options['order'] && dataIndex === 'maptalks_order') {
                     text = cell.getContent();
                 }
                 cell.setContent(text);
@@ -2037,7 +2117,9 @@ Table.include( /** @lends Table.prototype */{
             for (var j = 0, rowLength = row.length; j < rowLength; j++) {
                 cell = row[j];
                 if (i > rowNum) {
-                    this._translateDy(cell, -height);
+                    if (this.options['hideHeader']) {
+                        this._translateDy(cell, -height);
+                    }
                 } else if (show) {
                     cell.show();
                 } else {
@@ -2045,7 +2127,9 @@ Table.include( /** @lends Table.prototype */{
                 }
             }
         }
-        this.tableHeight -= height;
+        if (this.options['hideHeader']) {
+            this.tableHeight -= height;
+        }
         if (show) {
             this.fire('showrow', this);
         } else {
@@ -2174,7 +2258,7 @@ Table.include( /** @lends Table.prototype */{
             } else {
                 item = {};
             }
-            if (this.options['order'] && dataIndex === 'maptalks_order') {
+            if (this.options['dynamic'] && this.options['order'] && dataIndex === 'maptalks_order') {
                 if (!text || text === '') {
                     var startNum = this.options['startNum'] || 1;
                     if (startNum > 1) {
@@ -2185,6 +2269,7 @@ Table.include( /** @lends Table.prototype */{
                 }
                 item[dataIndex] = text;
             }
+            var thisColumnWidth = this._colWidths[i];
             if (add) {
                 var offset = this.getCellOffset(index - 1, i);
                 cellOffset = {
@@ -2192,11 +2277,16 @@ Table.include( /** @lends Table.prototype */{
                     'dy': offset.dy + rowHeight
                 };
                 symbol = this.options['symbol'];
-                size = new maptalks.Size(this._colWidths[i], rowHeight);
+                size = new maptalks.Size(thisColumnWidth, rowHeight);
             } else {
                 cellOffset = this.getCellOffset(index, i);
-                symbol = this.getCellSymbol(index, i);
-                size = new maptalks.Size(this._colWidths[i], rowHeight);
+                // symbol = this.getCellSymbol(index, i);
+                symbol = this.tableSymbols[index + '_' + i];
+                size = new maptalks.Size(thisColumnWidth, rowHeight);
+            }
+            var textWrapLength = symbol['textWrapWidth'];
+            if (thisColumnWidth > textWrapLength) {
+                symbol['textWrapWidth'] = thisColumnWidth;
             }
             cell = this.createCell(text, cellOffset, size, symbol);
             cell._row = index;
@@ -2303,7 +2393,7 @@ Table.include( /** @lends Table.prototype */{
             row = lastDataset[i];
             for (var j = 0, rowLength = row.length; j < rowLength; j++) {
                 row[j]._row += insertRowLength;
-                if (this.options['order'] && this._columns[j]['dataIndex'] === 'maptalks_order') {
+                if (this.options['dynamic'] && this.options['order'] && this._columns[j]['dataIndex'] === 'maptalks_order') {
                     var rowIndex = row[j]._row;
                     var startNum = this.options['startNum'] || 1;
                     if (startNum > 1) {
@@ -2350,35 +2440,40 @@ Table.include( /** @lends Table.prototype */{
 
 Table.include( /** @lends Table.prototype */{
     linkTo: function linkTo(target) {
-        if (!(target instanceof maptalks.Table)) return;
-        if (target.getLinker()) return;
-        if (target.getColumnNum() !== this.getColumnNum()) return;
-        target.addLinker(this);
+        if (!(target instanceof maptalks.Table)) return false;
+        if (target.getLinker()) return false;
+        if (target.getColumnNum() !== this.getColumnNum()) return false;
+        var ret = true;
+        ret = target.addLinker(this);
         this._linkTarget = target;
-        this.hideHeader();
+        //@Todo 暂时不隐藏表头
+        // this.hideHeader();
         this._moveToNewCoordinates();
         this._addLinkEvent();
         this._autoAdjustColumnWidth();
         this.config('draggable', false);
         this.config('adjustable', 'y');
+        return ret;
     },
     unLink: function unLink() {
-        if (!this._linkTarget) return;
+        if (!this._linkTarget) return false;
         this._removeLinkEvent();
         this._linkTarget.clearLinker();
         delete this._linkTarget;
         this.showHeader();
         this.config('draggable', true);
         this.config('adjustable', true);
+        return true;
     },
     clearLinker: function clearLinker() {
         this._linker = null;
         delete this._linker;
     },
     addLinker: function addLinker(linker) {
-        if (linker instanceof maptalks.Table) return;
-        if (this._linker) return;
+        if (!linker instanceof maptalks.Table) return false;
+        if (this._linker) return false;
         this._linker = linker;
+        return true;
     },
     getLinker: function getLinker() {
         return this._linker;

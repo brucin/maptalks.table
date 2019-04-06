@@ -3,6 +3,7 @@ import Table from './Table';
 Table.include(/** @lends Table.prototype */{
 
     createCell: function (content, cellOffset, size, symbol) {
+        if(!content) content = '';
         let textSize = symbol['textSize'] || 12;
         let textLineSpacing = symbol['textLineSpacing'] || 8;
         let textPadding = symbol['textPadding'] || [8, 2];
@@ -38,13 +39,15 @@ Table.include(/** @lends Table.prototype */{
             }
         };
         let coordinate = this.options['position'];
-        return new maptalks.TextBox(content, coordinate, size['width'], size['height'], options);
+        let tableCell = new maptalks.TextBox(content, coordinate, size['width'], size['height'], options);
+        tableCell.setZIndex(this._zindex);
+        return tableCell;
     },
 
     getCellOffset: function (row, col) {
         let dx = 0, dy = 0,
-            currentRowHeight = this._cellWidth / 2,
-            currentColWidth = this._cellHeight / 2;
+            currentRowHeight = this._cellHeight / 2,
+            currentColWidth = this._cellWidth / 2;
         if (this._rowHeights[row]) {
             currentRowHeight = this._rowHeights[row] / 2;
         }
@@ -79,7 +82,7 @@ Table.include(/** @lends Table.prototype */{
                 textPadding = [parseInt(textPadding.width), parseInt(textPadding.height)];
             }
         } else {
-            textPadding = [12, 8];
+            textPadding = [8, 2];
         }
         defaultSymbol['textPadding'] = textPadding;
         return defaultSymbol;
@@ -182,7 +185,18 @@ Table.include(/** @lends Table.prototype */{
         let num = cell.getContent();
         let cellSymbol = cell.getSymbol();
         let textWidth = cellSymbol['textSize'] || 12;
-        let numberLabel = new maptalks.TextBox(num, coordinate, textWidth + 6, textWidth + 6, options);
+        let padding = options.textStyle.padding;
+        let xpadding = 0, ypadding = 0;
+        if(padding) {
+            xpadding = padding[1] * 2;
+            ypadding = padding[0] * 2;
+        }
+        // let step = 1;
+        // if(num > 9) {
+        //     step = 2;
+        // }
+        // let numberLabel = new maptalks.TextBox(num, coordinate, textWidth*step + xpadding, textWidth*step + ypadding, options);
+        let numberLabel = new maptalks.TextBox(num, coordinate, textWidth*3/2 + xpadding, textWidth*3/2 + ypadding, options);
         this.getLayer().addGeometry(numberLabel);
         this._geometryNumLabels.push(numberLabel);
         let me = this;
@@ -249,7 +263,7 @@ Table.include(/** @lends Table.prototype */{
         };
         let textStyle = {
             'wrap': false,
-            'padding' : [2,2],
+            'padding' : [1, 1],
             'verticalAlignment' : 'top',
             'horizontalAlignment' : 'middle',
             'symbol' : {

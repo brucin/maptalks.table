@@ -10,7 +10,7 @@ Table.include(/** @lends Table.prototype */{
             col = this._columns[i];
             text = col['header'];
             size = new maptalks.Size(this._colWidths[i], this._rowHeights[0]);
-            let symbol = this.getCellSymbol(0, i);
+            let symbol = this.tableSymbols['0_' + i];
             cell = this.createCell(text, cellOffset, size, symbol);
             cell._row = 0;
             cell._col = i;
